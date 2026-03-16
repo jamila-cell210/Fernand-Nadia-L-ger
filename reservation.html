@@ -1,0 +1,167 @@
+{% extends "base.html" %}
+{% block title %}Réservation{% endblock %}
+{% block extra_css %}
+<style>
+.page-hero{background:linear-gradient(135deg,#f0f7ff,#e8f3fd);padding:3rem 2.5rem 2rem;border-bottom:1.5px solid var(--border)}
+.page-hero-inner{max-width:860px;margin:0 auto}
+.etab-badge{display:inline-flex;align-items:center;gap:.4rem;background:rgba(46,158,107,.1);border:1px solid rgba(46,158,107,.3);color:#2e9e6b;font-size:.74rem;font-weight:600;padding:.3rem .8rem;border-radius:50px;margin-bottom:.9rem}
+.page-hero h1{font-family:'Libre Baskerville',serif;font-size:1.9rem;font-weight:700;color:var(--dark);margin-bottom:.4rem}
+.page-hero p{font-size:.88rem;color:var(--muted)}
+.resa-wrap{max-width:860px;margin:2.5rem auto;padding:0 2.5rem 4rem}
+.fsection{background:#fff;border:1.5px solid var(--border);border-radius:16px;padding:1.8rem 2rem;margin-bottom:1.5rem}
+.fsection h2{font-family:'Libre Baskerville',serif;font-size:1.1rem;font-weight:700;color:var(--dark);margin-bottom:1.3rem;display:flex;align-items:center;gap:.5rem}
+.ftabs{display:flex;flex-wrap:wrap;gap:.5rem;margin-bottom:1.3rem}
+.ftab{font-size:.79rem;font-weight:600;padding:.42rem .95rem;border-radius:8px;border:1.5px solid var(--border);background:#fff;color:var(--muted);cursor:pointer;transition:all .2s;font-family:'Outfit',sans-serif}
+.ftab:hover{border-color:var(--blue);color:var(--blue)}.ftab.active{background:var(--blue);color:#fff;border-color:var(--blue)}
+.cren-grid{display:grid;grid-template-columns:1fr 1fr;gap:.75rem}
+.cren-card{border:1.5px solid var(--border);border-radius:12px;padding:1rem 1.1rem;cursor:pointer;transition:all .2s;position:relative}
+.cren-card:hover:not(.full){border-color:var(--blue);background:var(--pale)}
+.cren-card.selected{border-color:var(--blue);background:var(--pale);box-shadow:0 0 0 3px rgba(21,101,192,.15)}
+.cren-card.full{opacity:.55;cursor:not-allowed;background:#f8f8f8}
+.cren-card input[type=radio]{position:absolute;opacity:0}
+.cren-date{font-size:.84rem;font-weight:700;color:var(--dark);margin-bottom:.25rem}
+.cren-time{font-size:.88rem;color:var(--blue);font-weight:600;margin-bottom:.35rem}
+.cren-meta{font-size:.73rem;color:var(--muted);display:flex;gap:.8rem;flex-wrap:wrap;margin-bottom:.4rem}
+.pbadge{font-size:.68rem;font-weight:700;padding:.18rem .52rem;border-radius:5px}
+.p-ok{background:#e8f5ee;color:#1a7a4a}.p-warn{background:#fff8ee;color:#c07010}.p-full{background:#fef0f0;color:#b03030}
+.no-cren{text-align:center;padding:2rem;color:var(--muted);font-size:.88rem;background:var(--pale);border-radius:12px}
+.fgrid{display:grid;grid-template-columns:1fr 1fr;gap:1rem}
+.fg{display:flex;flex-direction:column;gap:.35rem}.fg.full{grid-column:1/-1}
+.fg label{font-size:.78rem;font-weight:600;color:var(--muted);letter-spacing:.02em}
+.fg input,.fg select{border:1.5px solid var(--border);border-radius:10px;padding:.72rem .95rem;font-size:.88rem;color:var(--text);font-family:'Outfit',sans-serif;outline:none;transition:border-color .2s;background:#fff}
+.fg input:focus,.fg select:focus{border-color:var(--blue);box-shadow:0 0 0 3px rgba(21,101,192,.1)}
+.fg input::placeholder{color:#a0b4c5}
+.req{color:var(--red)}
+.submit-area{text-align:center;margin-top:2rem}
+.submit-area p{font-size:.79rem;color:var(--muted);margin-top:.9rem}
+.attente-btn{display:inline-flex;align-items:center;gap:.4rem;background:#fff8ee;color:#c07010;border:1.5px solid #fde8b0;border-radius:10px;padding:.65rem 1.2rem;font-size:.84rem;font-weight:600;cursor:pointer;font-family:'Outfit',sans-serif;transition:all .2s}
+.attente-btn:hover{background:#fde8b0}
+@media(max-width:600px){.resa-wrap{padding:0 1.2rem 3rem}.cren-grid,.fgrid{grid-template-columns:1fr}.fg.full{grid-column:1}}
+</style>
+{% endblock %}
+{% block content %}
+<div class="page-hero">
+  <div class="page-hero-inner">
+    <div class="etab-badge">✅ Connecté — {{ etab_email }}</div>
+    <h1>🗓 Réserver un mini-stage</h1>
+    <p>Choisissez une formation, sélectionnez un créneau et remplissez les informations de l'élève.</p>
+  </div>
+</div>
+<div class="resa-wrap">
+  <form method="POST" id="resa-form">
+    <input type="hidden" name="creneau_id" id="creneau_id">
+
+    <!-- FORMATION -->
+    <div class="fsection">
+      <h2>🎓 Choisissez une formation</h2>
+      <div class="ftabs">
+        {% for f in formations %}
+          {% if f.id in par_formation %}
+          <button type="button" class="ftab" onclick="selectFormation(this,'{{f.id}}')">
+            {{f.emoji}} {{f.niveau}} {{f.nom}}
+          </button>
+          {% endif %}
+        {% endfor %}
+      </div>
+      {% for f in formations %}
+      {% if f.id in par_formation %}
+      <div id="crs-{{f.id}}" class="cren-container" style="display:none">
+        <div class="cren-grid">
+          {% for cr in par_formation[f.id] %}
+          <label class="cren-card {{'full' if cr.complet}}" onclick="{{'selectCreneau(this,'+cr.id|string+')' if not cr.complet}}">
+            <input type="radio" name="cren_radio" value="{{cr.id}}" {{'disabled' if cr.complet}}>
+            <div class="cren-date">📅 {{cr.date.strftime('%A %d %B %Y')|capitalize}}</div>
+            <div class="cren-time">⏱ {{cr.heure_debut}} – {{cr.heure_fin}}</div>
+            <div class="cren-meta">
+              {% if cr.salle %}<span>🚪 {{cr.salle}}</span>{% endif %}
+              {% if cr.professeur %}<span>👩‍🏫 {{cr.professeur}}</span>{% endif %}
+            </div>
+            {% if cr.complet %}
+              <span class="pbadge p-full">Complet</span>
+              <form method="POST" action="/liste-attente" style="display:inline;margin-top:.4rem">
+                <input type="hidden" name="creneau_id" value="{{cr.id}}">
+                <button type="submit" class="attente-btn" onclick="event.stopPropagation()">📋 Liste d'attente</button>
+              </form>
+            {% elif cr.places_restantes == 1 %}
+              <span class="pbadge p-warn">1 place restante</span>
+            {% else %}
+              <span class="pbadge p-ok">{{cr.places_restantes}} places disponibles</span>
+            {% endif %}
+          </label>
+          {% endfor %}
+        </div>
+      </div>
+      {% endif %}
+      {% endfor %}
+      <div id="no-cren" class="no-cren" style="display:none">Aucun créneau disponible pour cette formation.</div>
+    </div>
+
+    <!-- ÉLÈVE -->
+    <div class="fsection">
+      <h2>🧑‍🎓 Informations de l'élève</h2>
+      <div class="fgrid">
+        <div class="fg"><label>Nom <span class="req">*</span></label><input type="text" name="eleve_nom" placeholder="NOM" required></div>
+        <div class="fg"><label>Prénom <span class="req">*</span></label><input type="text" name="eleve_prenom" placeholder="Prénom" required></div>
+        <div class="fg"><label>Classe actuelle</label><input type="text" name="eleve_classe" placeholder="Ex : 3ème B"></div>
+        <div class="fg"><label>Date de naissance</label><input type="date" name="eleve_ddn"></div>
+        <div class="fg"><label>Nom du responsable légal</label><input type="text" name="resp_legal_nom" placeholder="Nom Prénom"></div>
+        <div class="fg"><label>Téléphone du responsable légal</label><input type="tel" name="resp_legal_tel" placeholder="06 00 00 00 00"></div>
+      </div>
+    </div>
+
+    <!-- ÉTABLISSEMENT -->
+    <div class="fsection">
+      <h2>🏫 Informations de l'établissement</h2>
+      <div class="fgrid">
+        <div class="fg full"><label>Nom de l'établissement <span class="req">*</span></label><input type="text" name="etab_nom" placeholder="Collège / Lycée..." required></div>
+        <div class="fg"><label>Ville</label><input type="text" name="etab_ville" placeholder="Ville"></div>
+        <div class="fg"><label>Nom du chef d'établissement <span class="req">*</span></label><input type="text" name="etab_contact" placeholder="M. / Mme..." required></div>
+        <div class="fg"><label>Téléphone</label><input type="tel" name="etab_tel" placeholder="01 00 00 00 00"></div>
+        <div class="fg full">
+          <label>Email de confirmation</label>
+          <input type="email" value="{{etab_email}}" disabled style="background:#f5f5f5;color:#888">
+          <span style="font-size:.71rem;color:var(--muted)">La convention sera envoyée à cette adresse.</span>
+        </div>
+      </div>
+    </div>
+
+    <div class="submit-area">
+      <button type="submit" class="btn-primary" id="submit-btn" disabled style="opacity:.5;cursor:not-allowed">
+        📄 Confirmer et recevoir la convention par mail
+      </button>
+      <p>⚠️ La convention doit être signée par le responsable légal et le chef d'établissement avant le stage.</p>
+    </div>
+  </form>
+</div>
+{% endblock %}
+{% block extra_js %}
+<script>
+let curF = null;
+function selectFormation(btn, fid) {
+  document.querySelectorAll('.ftab').forEach(b=>b.classList.remove('active'));
+  btn.classList.add('active');
+  document.querySelectorAll('.cren-container').forEach(c=>c.style.display='none');
+  document.getElementById('no-cren').style.display='none';
+  const el = document.getElementById('crs-'+fid);
+  if(el) el.style.display='block'; else document.getElementById('no-cren').style.display='block';
+  curF = fid;
+  document.getElementById('creneau_id').value='';
+  document.querySelectorAll('.cren-card').forEach(c=>c.classList.remove('selected'));
+  updateBtn();
+}
+function selectCreneau(card, id) {
+  document.querySelectorAll('.cren-card').forEach(c=>c.classList.remove('selected'));
+  card.classList.add('selected');
+  document.getElementById('creneau_id').value=id;
+  updateBtn();
+}
+function updateBtn() {
+  const btn=document.getElementById('submit-btn');
+  const ok=curF!==null && document.getElementById('creneau_id').value!=='';
+  btn.disabled=!ok; btn.style.opacity=ok?'1':'.5'; btn.style.cursor=ok?'pointer':'not-allowed';
+}
+document.getElementById('resa-form').addEventListener('submit',e=>{
+  if(!document.getElementById('creneau_id').value){e.preventDefault();alert('Veuillez sélectionner un créneau.');}
+});
+</script>
+{% endblock %}

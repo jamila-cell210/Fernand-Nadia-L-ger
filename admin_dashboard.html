@@ -1,0 +1,170 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1.0">
+<title>Dashboard Admin — Mini-Stages</title>
+<link href="https://fonts.googleapis.com/css2?family=Libre+Baskerville:wght@700&family=Outfit:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+:root{--blue:#1565c0;--pale:#f0f7ff;--light:#e3f0fb;--border:#d0e4f5;--dark:#0d1a2b;--text:#1a2535;--muted:#5a7490;--green:#2e9e6b;--red:#d94f4f}
+*{margin:0;padding:0;box-sizing:border-box}
+body{font-family:'Outfit',sans-serif;background:#f4f7fb;color:var(--text)}
+.sidebar{position:fixed;left:0;top:0;bottom:0;width:230px;background:var(--dark);padding:1.5rem;display:flex;flex-direction:column;gap:.35rem;z-index:100}
+.slogo{font-family:'Libre Baskerville',serif;font-size:.92rem;font-weight:700;color:#fff;margin-bottom:1.4rem;line-height:1.3}
+.slogo span{display:block;font-family:'Outfit',sans-serif;font-size:.68rem;color:rgba(255,255,255,.5);font-weight:400;margin-top:.2rem}
+.sidebar a{display:flex;align-items:center;gap:.55rem;padding:.58rem .75rem;border-radius:8px;text-decoration:none;font-size:.81rem;font-weight:500;color:rgba(255,255,255,.6);transition:all .2s}
+.sidebar a:hover,.sidebar a.active{background:rgba(255,255,255,.1);color:#fff}
+.sbottom{margin-top:auto}
+.main{margin-left:230px;padding:2rem 2.5rem;min-height:100vh}
+.topbar{display:flex;align-items:center;justify-content:space-between;margin-bottom:2rem}
+.topbar h1{font-family:'Libre Baskerville',serif;font-size:1.6rem;font-weight:700;color:var(--dark)}
+.stats{display:grid;grid-template-columns:repeat(4,1fr);gap:1rem;margin-bottom:2rem}
+.scard{background:#fff;border:1.5px solid var(--border);border-radius:14px;padding:1.2rem 1.4rem}
+.scard .num{font-family:'Libre Baskerville',serif;font-size:1.9rem;font-weight:700;color:var(--blue)}
+.scard .lbl{font-size:.75rem;color:var(--muted);margin-top:.2rem}
+.card{background:#fff;border:1.5px solid var(--border);border-radius:16px;padding:1.5rem;margin-bottom:1.5rem}
+.card h2{font-family:'Libre Baskerville',serif;font-size:1.08rem;font-weight:700;color:var(--dark);margin-bottom:1.2rem;display:flex;align-items:center;gap:.5rem}
+.form-row{display:grid;grid-template-columns:2fr 110px 90px 90px 130px 120px 80px auto;gap:.6rem;align-items:end}
+.fg{display:flex;flex-direction:column;gap:.28rem}
+.fg label{font-size:.7rem;font-weight:600;color:var(--muted);letter-spacing:.03em}
+.fg input,.fg select{border:1.5px solid var(--border);border-radius:8px;padding:.55rem .75rem;font-size:.82rem;font-family:'Outfit',sans-serif;outline:none;transition:border-color .2s;background:#fff}
+.fg input:focus,.fg select:focus{border-color:var(--blue)}
+.btn-add{background:var(--blue);color:#fff;border:none;border-radius:8px;padding:.6rem 1rem;font-size:.8rem;font-weight:700;font-family:'Outfit',sans-serif;cursor:pointer;transition:all .2s;white-space:nowrap}
+.btn-add:hover{background:#0d47a1}
+.btn-del{background:#fef0f0;color:var(--red);border:1px solid #f5c0c0;border-radius:7px;padding:.45rem .65rem;font-size:.8rem;font-family:'Outfit',sans-serif;cursor:pointer;transition:all .2s}
+.btn-del:hover{background:var(--red);color:#fff}
+.btn-dl{background:var(--pale);color:var(--blue);border:1px solid var(--border);border-radius:7px;padding:.42rem .75rem;font-size:.78rem;font-family:'Outfit',sans-serif;cursor:pointer;transition:all .2s;text-decoration:none;display:inline-flex;align-items:center;gap:.3rem}
+.btn-dl:hover{background:var(--blue);color:#fff}
+table{width:100%;border-collapse:collapse}
+th{font-size:.7rem;font-weight:700;color:var(--muted);letter-spacing:.05em;text-transform:uppercase;padding:.55rem .75rem;text-align:left;border-bottom:1.5px solid var(--border)}
+td{font-size:.81rem;color:var(--text);padding:.65rem .75rem;border-bottom:1px solid #f0f4f8}
+tr:last-child td{border-bottom:none}tr:hover td{background:var(--pale)}
+.badge{font-size:.67rem;font-weight:700;padding:.18rem .52rem;border-radius:5px}
+.b-ok{background:#e8f5ee;color:#1a7a4a}.b-warn{background:#fff8ee;color:#c07010}.b-full{background:#fef0f0;color:#b03030}
+.flash{padding:.7rem 1rem;border-radius:8px;font-size:.84rem;margin-bottom:1rem}
+.flash.success{background:#e8f5ee;color:#1a7a4a;border:1px solid #b0dfc0}
+.flash.error{background:#fef0f0;color:#b03030;border:1px solid #f5c0c0}
+.empty{text-align:center;color:var(--muted);padding:2rem;font-size:.85rem}
+</style></head>
+<body>
+<nav class="sidebar">
+  <div class="slogo">Mini-Stages<span>Lycée Fernand et Nadia Léger</span></div>
+  <a href="/admin/dashboard" class="active">📊 Dashboard</a>
+  <a href="/" target="_blank">🌐 Voir le site</a>
+  <div class="sbottom"><a href="/admin/logout">🚪 Déconnexion</a></div>
+</nav>
+<main class="main">
+  <div class="topbar">
+    <h1>Dashboard Admin</h1>
+    <span style="font-size:.81rem;color:var(--muted)">{{today.strftime('%d/%m/%Y')}}</span>
+  </div>
+
+  {% with messages = get_flashed_messages(with_categories=true) %}
+  {% if messages %}{% for c,m in messages %}<div class="flash {{c}}">{{m}}</div>{% endfor %}{% endif %}
+  {% endwith %}
+
+  <div class="stats">
+    <div class="scard"><div class="num">{{reservations|length}}</div><div class="lbl">Réservations actives</div></div>
+    <div class="scard"><div class="num">{{creneaux|selectattr('actif')|list|length}}</div><div class="lbl">Créneaux actifs</div></div>
+    <div class="scard"><div class="num">{{creneaux|selectattr('complet')|list|length}}</div><div class="lbl">Créneaux complets</div></div>
+    <div class="scard"><div class="num">{{attentes|length}}</div><div class="lbl">En liste d'attente</div></div>
+  </div>
+
+  <!-- AJOUTER CRÉNEAU -->
+  <div class="card">
+    <h2>➕ Ajouter un créneau</h2>
+    <form method="POST" action="/admin/creneau/ajouter">
+      <div class="form-row">
+        <div class="fg">
+          <label>Formation</label>
+          <select name="formation_id" required>
+            <option value="">— Choisir —</option>
+            {% for f in formations %}
+            <option value="{{f.id}}">{{f.niveau}} {{f.nom}}</option>
+            {% endfor %}
+          </select>
+        </div>
+        <div class="fg"><label>Date</label><input type="date" name="date" required></div>
+        <div class="fg"><label>Début</label><input type="time" name="heure_debut" required></div>
+        <div class="fg"><label>Fin</label><input type="time" name="heure_fin" required></div>
+        <div class="fg"><label>Salle</label><input type="text" name="salle" placeholder="Ex: A002"></div>
+        <div class="fg"><label>Professeur</label><input type="text" name="professeur" placeholder="Mme ..."></div>
+        <div class="fg"><label>Places max</label><input type="number" name="places_max" value="4" min="1" max="30"></div>
+        <div class="fg"><label>&nbsp;</label><button type="submit" class="btn-add">➕ Ajouter</button></div>
+      </div>
+    </form>
+  </div>
+
+  <!-- CRÉNEAUX -->
+  <div class="card">
+    <h2>📅 Créneaux actifs</h2>
+    <table>
+      <thead><tr><th>Formation</th><th>Date</th><th>Horaires</th><th>Salle</th><th>Prof</th><th>Places</th><th>Statut</th><th></th></tr></thead>
+      <tbody>
+        {% for cr in creneaux %}{% if cr.actif %}
+        <tr>
+          <td>{% set f=cr.formation %}{% if f %}{{f.niveau}} {{f.nom}}{% else %}—{% endif %}</td>
+          <td>{{cr.date.strftime('%d/%m/%Y')}}</td>
+          <td>{{cr.heure_debut}}–{{cr.heure_fin}}</td>
+          <td>{{cr.salle or '—'}}</td>
+          <td>{{cr.professeur or '—'}}</td>
+          <td>{{cr.places_restantes}}/{{cr.places_max}}</td>
+          <td>
+            {% if cr.complet %}<span class="badge b-full">Complet</span>
+            {% elif cr.places_restantes<=1 %}<span class="badge b-warn">1 place</span>
+            {% else %}<span class="badge b-ok">Dispo</span>{% endif %}
+          </td>
+          <td>
+            <form method="POST" action="/admin/creneau/supprimer/{{cr.id}}" onsubmit="return confirm('Désactiver ce créneau ?')">
+              <button type="submit" class="btn-del">🗑</button>
+            </form>
+          </td>
+        </tr>
+        {% endif %}{% endfor %}
+        {% if not creneaux %}<tr><td colspan="8" class="empty">Aucun créneau pour le moment.</td></tr>{% endif %}
+      </tbody>
+    </table>
+  </div>
+
+  <!-- RÉSERVATIONS -->
+  <div class="card">
+    <h2>📋 Réservations ({{reservations|length}})</h2>
+    <table>
+      <thead><tr><th>Code</th><th>Formation</th><th>Date stage</th><th>Élève</th><th>Établissement</th><th>Réservé le</th><th>Convention</th></tr></thead>
+      <tbody>
+        {% for r in reservations %}
+        <tr>
+          <td><strong>{{r.code}}</strong></td>
+          <td>{% set f=r.creneau.formation %}{% if f %}{{f.niveau}} {{f.nom}}{% endif %}</td>
+          <td>{{r.creneau.date.strftime('%d/%m/%Y')}}</td>
+          <td>{{r.eleve_prenom}} {{r.eleve_nom}}</td>
+          <td>{{r.etab_nom}}</td>
+          <td>{{r.date_reservation.strftime('%d/%m %H:%M')}}</td>
+          <td><a href="/admin/convention/{{r.code}}" class="btn-dl">📄 PDF</a></td>
+        </tr>
+        {% endfor %}
+        {% if not reservations %}<tr><td colspan="7" class="empty">Aucune réservation pour le moment.</td></tr>{% endif %}
+      </tbody>
+    </table>
+  </div>
+
+  <!-- LISTE ATTENTE -->
+  {% if attentes %}
+  <div class="card">
+    <h2>📋 Liste d'attente ({{attentes|length}})</h2>
+    <table>
+      <thead><tr><th>Formation</th><th>Date</th><th>Email</th><th>Inscrit le</th><th>Notifié</th></tr></thead>
+      <tbody>
+        {% for a in attentes %}
+        <tr>
+          <td>{% set f=a.creneau.formation %}{% if f %}{{f.niveau}} {{f.nom}}{% endif %}</td>
+          <td>{{a.creneau.date.strftime('%d/%m/%Y')}}</td>
+          <td>{{a.etab_email}}</td>
+          <td>{{a.date_ajout.strftime('%d/%m %H:%M')}}</td>
+          <td>{% if a.notifie %}<span class="badge b-warn">Notifié</span>{% else %}<span class="badge b-ok">En attente</span>{% endif %}</td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+  {% endif %}
+</main>
+</body></html>

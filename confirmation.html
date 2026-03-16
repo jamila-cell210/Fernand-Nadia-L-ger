@@ -1,0 +1,47 @@
+{% extends "base.html" %}
+{% block title %}Réservation confirmée{% endblock %}
+{% block extra_css %}
+<style>
+.conf-wrap{max-width:640px;margin:4rem auto;padding:0 2rem;text-align:center}
+.conf-icon{font-size:4rem;margin-bottom:1.3rem;animation:bounce .6s ease}
+@keyframes bounce{0%{transform:scale(0)}60%{transform:scale(1.15)}100%{transform:scale(1)}}
+.conf-wrap h1{font-family:'Libre Baskerville',serif;font-size:2rem;font-weight:700;color:var(--dark);margin-bottom:.7rem}
+.conf-wrap>p{font-size:.93rem;color:var(--muted);line-height:1.7;margin-bottom:1.4rem}
+.code-badge{display:inline-block;background:var(--blue);color:#fff;font-size:1.15rem;font-weight:700;letter-spacing:5px;padding:.55rem 1.5rem;border-radius:10px;margin:.7rem 0 1.5rem}
+.conf-card{background:var(--pale);border:1.5px solid var(--border);border-radius:16px;padding:1.6rem;text-align:left;margin-bottom:1.5rem}
+.conf-card table{width:100%;border-collapse:collapse}
+.conf-card td{padding:.55rem .7rem;font-size:.86rem}
+.conf-card td:first-child{font-weight:700;color:var(--muted);width:40%}
+.conf-card tr:nth-child(even) td{background:rgba(21,101,192,.04)}
+.warn-box{background:#fff8ee;border:1px solid #fde8b0;border-radius:12px;padding:1.1rem 1.3rem;text-align:left;font-size:.83rem;line-height:1.7;color:#7a4e10;margin-bottom:1.5rem}
+.conf-actions{display:flex;gap:.8rem;justify-content:center;flex-wrap:wrap}
+</style>
+{% endblock %}
+{% block content %}
+<div class="conf-wrap">
+  <div class="conf-icon">✅</div>
+  <h1>Réservation confirmée !</h1>
+  <p>La convention a été générée et envoyée à <strong>{{ resa.etab_email }}</strong>.<br>Notez votre code de réservation :</p>
+  <div class="code-badge">{{ resa.code }}</div>
+  <div class="conf-card">
+    <table>
+      <tr><td>Formation</td><td>{% set f=resa.creneau.formation %}{% if f %}{{f.niveau}} {{f.nom}}{% endif %}</td></tr>
+      <tr><td>Date</td><td>{{ resa.creneau.date.strftime('%d/%m/%Y') }}</td></tr>
+      <tr><td>Horaires</td><td>{{ resa.creneau.heure_debut }} – {{ resa.creneau.heure_fin }}</td></tr>
+      <tr><td>Salle</td><td>{{ resa.creneau.salle or '—' }}</td></tr>
+      <tr><td>Élève</td><td>{{ resa.eleve_prenom }} {{ resa.eleve_nom }}</td></tr>
+      <tr><td>Établissement</td><td>{{ resa.etab_nom }}</td></tr>
+    </table>
+  </div>
+  <div class="warn-box">
+    <strong>⚠️ Avant le jour du stage, la convention doit être signée par :</strong><br>
+    • Le(s) responsable(s) légal(aux) de l'élève<br>
+    • Le chef de votre établissement<br><br>
+    <strong>L'élève doit impérativement se présenter avec la convention signée. Sans convention, il ne sera pas accepté.</strong>
+  </div>
+  <div class="conf-actions">
+    <a href="/convention/{{ resa.code }}" class="btn-primary">📄 Télécharger la convention</a>
+    <a href="/" class="btn-outline">Retour à l'accueil</a>
+  </div>
+</div>
+{% endblock %}
