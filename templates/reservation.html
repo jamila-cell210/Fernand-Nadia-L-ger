@@ -71,7 +71,7 @@
 <div class="page-hero">
   <div class="page-hero-inner">
     <div class="etab-badge">✅ Connecté — {{ etab_email }}</div>
-    <h1>🗓 Réserver un mini-stage</h1>
+    <h1>🗓️ Réserver un mini-stage</h1>
     <p>Sélectionnez une formation, choisissez un créneau, puis remplissez les informations.</p>
   </div>
 </div>
@@ -128,7 +128,7 @@
         {% else %}
         <div class="no-cren">
           Aucun créneau disponible pour cette formation pour le moment.<br>
-          <span style="font-size:.78rem">Revenez prochainement ou contactez-nous.</span>
+          <span style="font-size:.78rem">Revenez prochainement ou contactez-nous à <a href="mailto:jamila.zenid@flargenteuil.com" style="color:var(--blue)">jamila.zenid@flargenteuil.com</a></span>
         </div>
         {% endif %}
       </div>
@@ -143,9 +143,9 @@
         <div class="fg"><label>Prénom <span class="req">*</span></label><input type="text" name="eleve_prenom" placeholder="Prénom" required></div>
         <div class="fg"><label>Classe actuelle</label><input type="text" name="eleve_classe" placeholder="Ex : 3ème B"></div>
         <div class="fg"><label>Date de naissance</label><input type="date" name="eleve_ddn"></div>
-        <div class="fg"><label>Téléphone du responsable légal <span class="req">*</span></label><input type="tel" name="resp_legal_tel" placeholder="06 00 00 00 00" required></div>
-        <div class="fg"><label>Email du responsable légal</label><input type="email" name="resp_legal_email" placeholder="email@exemple.fr"></div>
-      </div>
+        <div class="fg"><label>Nom du responsable légal <span class="req">*</span></label><input type="text" name="resp_legal_nom" placeholder="NOM Prénom" required></div>
+<div class="fg"><label>Téléphone du responsable légal <span class="req">*</span></label><input type="tel" name="resp_legal_tel" placeholder="06 00 00 00 00" required></div>
+<div class="fg"><label>Email du responsable légal <span class="req">*</span></label><input type="email" name="resp_legal_email" placeholder="email@exemple.fr" required></div>
     </div>
 
     <!-- ÉTAPE 3 : ÉTABLISSEMENT -->
@@ -157,7 +157,7 @@
         <div class="fg"><label>Téléphone établissement <span class="req">*</span></label><input type="tel" name="etab_tel" placeholder="01 00 00 00 00" required></div>
         <div class="fg full">
           <label>Email établissement</label>
-          <input type="email" value="{{etab_email}}" disabled style="background:#f5f5f5;color:#888">
+        <input type="email" value="" placeholder="email@etablissement.fr" name="etab_email_affiche">
           <span style="font-size:.71rem;color:var(--muted)">La convention sera envoyée à cette adresse.</span>
         </div>
       </div>
