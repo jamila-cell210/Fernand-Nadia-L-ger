@@ -51,50 +51,52 @@
   <form method="POST" id="resa-form">
     <input type="hidden" name="creneau_id" id="creneau_id">
 
-    <!-- FORMATION -->
-    <div class="fsection">
-      <h2>🎓 Choisissez une formation</h2>
-      <div class="ftabs">
-        {% for f in formations %}
-          {% if f.id in par_formation %}
-          <button type="button" class="ftab" onclick="selectFormation(this,'{{f.id}}')">
-            {{f.emoji}} {{f.niveau}} {{f.nom}}
-          </button>
-          {% endif %}
-        {% endfor %}
-      </div>
-      {% for f in formations %}
-      {% if f.id in par_formation %}
-      <div id="crs-{{f.id}}" class="cren-container" style="display:none">
-        <div class="cren-grid">
-          {% for cr in par_formation[f.id] %}
-          <label class="cren-card {{'full' if cr.complet}}" onclick="{{'selectCreneau(this,'+cr.id|string+')' if not cr.complet}}">
-            <input type="radio" name="cren_radio" value="{{cr.id}}" {{'disabled' if cr.complet}}>
-            <div class="cren-date">📅 {{cr.date.strftime('%A %d %B %Y')|capitalize}}</div>
-            <div class="cren-time">⏱ {{cr.heure_debut}} – {{cr.heure_fin}}</div>
-            <div class="cren-meta">
-              {% if cr.salle %}<span>🚪 {{cr.salle}}</span>{% endif %}
-              {% if cr.professeur %}<span>👩‍🏫 {{cr.professeur}}</span>{% endif %}
-            </div>
-            {% if cr.complet %}
-              <span class="pbadge p-full">Complet</span>
-              <form method="POST" action="/liste-attente" style="display:inline;margin-top:.4rem">
-                <input type="hidden" name="creneau_id" value="{{cr.id}}">
-                <button type="submit" class="attente-btn" onclick="event.stopPropagation()">📋 Liste d'attente</button>
-              </form>
-            {% elif cr.places_restantes == 1 %}
-              <span class="pbadge p-warn">1 place restante</span>
-            {% else %}
-              <span class="pbadge p-ok">{{cr.places_restantes}} places disponibles</span>
-            {% endif %}
-          </label>
-          {% endfor %}
-        </div>
-      </div>
-      {% endif %}
-      {% endfor %}
-      <div id="no-cren" class="no-cren" style="display:none">Aucun créneau disponible pour cette formation.</div>
+   <!-- FORMATION -->
+<div class="fsection">
+  <h2>🎓 Choisissez une formation</h2>
+  <div class="ftabs">
+    {% for f in formations %}
+    <button type="button" class="ftab" onclick="selectFormation(this,'{{f.id}}')">
+      {{f.emoji}} {{f.niveau}} {{f.nom}}
+    </button>
+    {% endfor %}
+  </div>
+  {% for f in formations %}
+  <div id="crs-{{f.id}}" class="cren-container" style="display:none">
+    <div style="font-size:.83rem;color:var(--muted);margin-bottom:1rem;padding:.7rem 1rem;background:var(--pale);border-radius:8px;">
+      {{f.description}}
     </div>
+    {% if f.id in par_formation and par_formation[f.id]|length > 0 %}
+    <div class="cren-grid">
+      {% for cr in par_formation[f.id] %}
+      <label class="cren-card {{'full' if cr.complet}}" onclick="{{'selectCreneau(this,'+cr.id|string+')' if not cr.complet}}">
+        <input type="radio" name="cren_radio" value="{{cr.id}}" {{'disabled' if cr.complet}}>
+        <div class="cren-date">📅 {{cr.date.strftime('%A %d %B %Y')|capitalize}}</div>
+        <div class="cren-time">⏱ {{cr.heure_debut}} – {{cr.heure_fin}}</div>
+        <div class="cren-meta">
+          {% if cr.salle %}<span>🚪 {{cr.salle}}</span>{% endif %}
+          {% if cr.professeur %}<span>👩‍🏫 {{cr.professeur}}</span>{% endif %}
+        </div>
+        {% if cr.complet %}
+          <span class="pbadge p-full">Complet</span>
+          <form method="POST" action="/liste-attente" style="display:inline;margin-top:.4rem">
+            <input type="hidden" name="creneau_id" value="{{cr.id}}">
+            <button type="submit" class="attente-btn" onclick="event.stopPropagation()">📋 Liste d'attente</button>
+          </form>
+        {% elif cr.places_restantes == 1 %}
+          <span class="pbadge p-warn">1 place restante</span>
+        {% else %}
+          <span class="pbadge p-ok">{{cr.places_restantes}} places disponibles</span>
+        {% endif %}
+      </label>
+      {% endfor %}
+    </div>
+    {% else %}
+    <div class="no-cren">Aucun créneau disponible pour cette formation pour le moment.</div>
+    {% endif %}
+  </div>
+  {% endfor %}
+</div>
 
     <!-- ÉLÈVE -->
     <div class="fsection">
