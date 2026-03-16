@@ -16,48 +16,32 @@
 .hero-card{background:#fff;border-radius:20px;box-shadow:var(--sh2);padding:1.8rem;border:1px solid var(--border);animation:fu .7s .2s ease both}
 .hc-title{font-size:.7rem;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:var(--muted);margin-bottom:1rem}
 .flist{display:flex;flex-direction:column;gap:.45rem}
-.fitem{display:flex;align-items:center;justify-content:space-between;padding:.6rem .85rem;border-radius:10px;background:var(--pale);border:1px solid transparent;transition:all .2s}
+.fitem{display:flex;align-items:center;padding:.6rem .85rem;border-radius:10px;background:var(--pale);border:1px solid transparent;transition:all .2s}
 .fitem:hover{border-color:var(--blue);background:var(--light)}
 .fname{font-size:.8rem;font-weight:600;color:var(--text);display:flex;align-items:center;gap:.45rem}
-.tag{font-size:.63rem;font-weight:700;padding:.15rem .5rem;border-radius:4px;letter-spacing:.04em}
-.tag-cap{background:var(--light);color:var(--blue)}.tag-bac{background:#fff3e0;color:#e07820}
-
+.tag{font-size:.63rem;font-weight:700;padding:.15rem .5rem;border-radius:4px;letter-spacing:.04em;white-space:nowrap}
+.tag-cap{background:var(--light);color:var(--blue)}.tag-bac{background:#fff3e0;color:#e07820}.tag-techno{background:#f3e5f5;color:#7b1fa2}
 .stats-bar{background:var(--blue);padding:1.4rem 2.5rem}
 .stats-inner{max-width:1060px;margin:0 auto;display:flex;align-items:center;justify-content:space-around;gap:1rem;flex-wrap:wrap}
 .stat{display:flex;align-items:center;gap:.8rem}
 .stat-num{font-family:'Libre Baskerville',serif;font-size:1.5rem;font-weight:700;color:#fff;line-height:1}
 .stat-lbl{font-size:.73rem;color:rgba(255,255,255,.7);font-weight:500;line-height:1.3}
 .sdiv{width:1px;height:38px;background:rgba(255,255,255,.2)}
-
 .section{max-width:1060px;margin:0 auto;padding:5rem 2.5rem}
 .sec-tag{font-size:.7rem;font-weight:700;letter-spacing:.1em;text-transform:uppercase;color:var(--blue);display:block;margin-bottom:.5rem}
 .sec-title{font-family:'Libre Baskerville',serif;font-size:clamp(1.6rem,2.5vw,2.2rem);font-weight:700;color:var(--dark);line-height:1.2;margin-bottom:2.5rem}
-
 .info-grid{display:grid;grid-template-columns:1fr 1fr;gap:1.2rem}
 .icard{background:#fff;border:1.5px solid var(--border);border-radius:16px;padding:1.8rem 2rem;transition:all .25s;position:relative;overflow:hidden}
 .icard:hover{border-color:var(--blue);box-shadow:var(--sh);transform:translateY(-2px)}
 .icard::before{content:'';position:absolute;top:0;left:0;width:4px;height:100%;background:var(--blue);border-radius:16px 0 0 16px}
 .icard h3{font-size:.95rem;font-weight:700;color:var(--dark);margin-bottom:1rem;padding-left:.5rem;display:flex;align-items:center;gap:.5rem}
 .icard ul{list-style:none;display:flex;flex-direction:column;gap:.45rem;padding-left:.5rem}
-.icard ul li{font-size:.84rem;line-height:1.6;color:#4a6070;display:flex;align-items:flex-start;gap:.5rem}
-.icard ul li::before{content:'›';color:var(--blue);font-size:1rem;font-weight:700;flex-shrink:0;margin-top:-1px}
+.icard ul li{font-size:.84rem;line-height:1.6;color:#4a6070;padding-left:1rem;position:relative}
+.icard ul li::before{content:'›';color:var(--blue);font-size:1rem;font-weight:700;position:absolute;left:0;top:0}
 .callout{margin-top:1rem;padding:.8rem 1rem;border-radius:10px;font-size:.81rem;line-height:1.6}
 .c-blue{background:var(--pale);color:var(--blue);border:1px solid var(--border)}
 .c-orange{background:#fff8ee;color:#c07010;border:1px solid #fde8b0}
 .c-red{background:#fff2f2;color:#b03030;border:1px solid #f5c0c0}
-
-.f-section{background:var(--pale);padding:5rem 2.5rem}
-.f-inner{max-width:1060px;margin:0 auto}
-.f-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:1rem;margin-top:2.5rem}
-.fcard{background:#fff;border:1.5px solid var(--border);border-radius:14px;padding:1.3rem 1.4rem;transition:all .25s}
-.fcard:hover{border-color:var(--blue);box-shadow:var(--sh);transform:translateY(-3px)}
-.fcard-top{display:flex;align-items:flex-start;justify-content:space-between;margin-bottom:.7rem}
-.femoji{font-size:1.7rem}
-.fbadge{font-size:.63rem;font-weight:700;padding:.2rem .55rem;border-radius:5px;letter-spacing:.04em}
-.fb-cap{background:var(--light);color:var(--blue)}.fb-bac{background:#fff3e0;color:#d07010}
-.fcard-name{font-size:.87rem;font-weight:700;color:var(--dark);line-height:1.3;margin-bottom:.3rem}
-.fcard-level{font-size:.73rem;color:var(--muted)}
-
 .actions-section{max-width:1060px;margin:0 auto;padding:5rem 2.5rem}
 .actions-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:1.2rem;margin-top:2.5rem}
 .acard{border-radius:16px;padding:2rem 1.8rem;display:flex;flex-direction:column;border:1.5px solid var(--border);text-decoration:none;color:inherit;transition:all .25s;background:#fff;cursor:pointer}
@@ -71,7 +55,6 @@
 .adesc{font-size:.82rem;line-height:1.65;color:var(--muted);flex:1;margin-bottom:1.4rem}
 .abtn{display:inline-flex;align-items:center;gap:.4rem;font-size:.79rem;font-weight:600;color:var(--blue);border:1.5px solid var(--blue);border-radius:8px;padding:.5rem .95rem;background:var(--pale);transition:all .2s;cursor:pointer;width:fit-content;text-decoration:none;font-family:'Outfit',sans-serif}
 .abtn:hover{background:var(--blue);color:#fff}
-
 .overlay{display:none;position:fixed;inset:0;background:rgba(13,26,43,.6);backdrop-filter:blur(8px);z-index:1000;align-items:center;justify-content:center}
 .overlay.open{display:flex}
 .modal{background:#fff;border-radius:20px;padding:2.5rem;width:90%;max-width:430px;box-shadow:0 24px 64px rgba(0,0,0,.2);animation:pop .3s cubic-bezier(.34,1.56,.64,1)}
@@ -89,30 +72,30 @@
 .mcancel:hover{border-color:#a0b4c5;color:var(--text)}
 .mdp-link{display:block;text-align:center;margin-top:1rem;font-size:.79rem;color:var(--blue);text-decoration:none}
 .mdp-link:hover{text-decoration:underline}
-
-@media(max-width:900px){.hero-inner{grid-template-columns:1fr}.hero-card{display:none}.info-grid,.f-grid,.actions-grid{grid-template-columns:1fr 1fr}.sdiv{display:none}}
-@media(max-width:600px){.hero,.section,.actions-section{padding-left:1.2rem;padding-right:1.2rem}.f-section{padding-left:1.2rem;padding-right:1.2rem}.f-grid,.info-grid,.actions-grid{grid-template-columns:1fr}.hero-ctas{flex-direction:column}}
+@media(max-width:900px){.hero-inner{grid-template-columns:1fr}.hero-card{display:none}.info-grid,.actions-grid{grid-template-columns:1fr 1fr}.sdiv{display:none}}
+@media(max-width:600px){.hero,.section,.actions-section{padding-left:1.2rem;padding-right:1.2rem}.info-grid,.actions-grid{grid-template-columns:1fr}.hero-ctas{flex-direction:column}}
 </style>
 {% endblock %}
+
 {% block content %}
 <section class="hero">
   <div class="hero-inner">
     <div>
       <div class="badge"><div class="dot"></div> Réservations ouvertes 2025–2026</div>
-   <h1>Découvrez nos<br>formations<br><em>autrement</em></h1>
-      <p class="desc">Le Lycée Fernand et Nadia Léger accueille les élèves de 4ème, 3ème et 2nde pour des mini-stages de 2 à 4h — une occasion unique d'explorer nos filières avant de s'orienter.</p>
+      <h1>Venez explorer<br><em>nos formations</em></h1>
+      <p class="desc">Le Lycée Fernand et Nadia Léger accueille les élèves de 4ème, 3ème et 2nde pour des mini-stages d'observation de 2 à 4h — une occasion unique de découvrir nos filières avant de s'orienter.</p>
       <div class="hero-ctas">
-        <button class="btn-primary" onclick="openModal()"> Faire une réservation</button>
+        <button class="btn-primary" onclick="openModal()">🗓 Faire une réservation</button>
         <a href="#infos" class="btn-outline">En savoir plus</a>
       </div>
     </div>
     <div class="hero-card">
-      <div class="hc-title">Nos 9 formations disponibles</div>
+      <div class="hc-title">Nos formations disponibles</div>
       <div class="flist">
         {% for f in formations %}
         <div class="fitem">
           <span class="fname">
-            <span class="tag {{'tag-cap' if f.niveau=='CAP' else 'tag-bac'}}">{{f.niveau}}</span>
+            <span class="tag {{'tag-cap' if f.niveau=='CAP' else ('tag-techno' if f.niveau=='BAC TECHNO' else 'tag-bac')}}">{{f.niveau}}</span>
             {{f.emoji}} {{f.nom}}
           </span>
         </div>
@@ -128,7 +111,7 @@
     <div class="sdiv"></div>
     <div class="stat"><span style="font-size:1.6rem">⏱</span><div><div class="stat-num">2–4h</div><div class="stat-lbl">Durée des<br>mini-stages</div></div></div>
     <div class="sdiv"></div>
-    <div class="stat"><span style="font-size:1.6rem">🎒</span><div><div class="stat-num">4e à la 2nde</div><div class="stat-lbl">Niveaux<br>accueillis</div></div></div>
+    <div class="stat"><span style="font-size:1.6rem">🎒</span><div><div class="stat-num">4e·3e·2nde</div><div class="stat-lbl">Niveaux<br>accueillis</div></div></div>
     <div class="sdiv"></div>
     <div class="stat"><span style="font-size:1.6rem">📄</span><div><div class="stat-num">Auto</div><div class="stat-lbl">Convention<br>générée par mail</div></div></div>
   </div>
@@ -138,51 +121,56 @@
   <span class="sec-tag">Informations pratiques</span>
   <h2 class="sec-title">Tout ce qu'il faut savoir<br>avant de réserver</h2>
   <div class="info-grid">
+
     <div class="icard">
       <h3>🎓 Qui peut participer ?</h3>
       <ul>
-        <li>Élèves de <strong>4ème et 3ème</strong> pour les CAP et Bac Pro</li>
-        <li>Élèves de <strong>2nde</strong> pour les Bac Pro</li>
-        <li>La réservation est faite par <strong>l'établissement scolaire</strong></li>
-        <li>Adresse académique obligatoire :<br><strong>@ac-versailles.fr / @ac-creteil.fr / @ac-paris.fr</strong></li>
+        <li>Élèves de 4ème et 3ème pour les CAP et Bac Pro</li>
+        <li>Élèves de 2nde pour les Bac Pro et Bac Techno</li>
+        <li>La réservation est faite par l'établissement scolaire de l'élève</li>
+        <li>Adresse académique obligatoire : @ac-versailles.fr, @ac-creteil.fr ou @ac-paris.fr</li>
       </ul>
-      <div class="callout c-blue">🔑 Un mot de passe est envoyé automatiquement sur votre adresse académique.</div>
+      <div class="callout c-blue">🔑 Un mot de passe vous est envoyé automatiquement sur votre adresse académique.</div>
     </div>
+
     <div class="icard">
       <h3>📋 Comment réserver ?</h3>
       <ul>
-        <li>Cliquez sur <strong>"Faire une réservation"</strong> et saisissez votre mot de passe</li>
-        <li>Choisissez la <strong>formation</strong> et le <strong>créneau</strong> souhaité</li>
+        <li>Cliquez sur "Faire une réservation" et saisissez votre mot de passe</li>
+        <li>Choisissez la formation et le créneau souhaité</li>
         <li>Remplissez les coordonnées de l'élève et de l'établissement</li>
-        <li>La <strong>convention PDF</strong> est générée et envoyée automatiquement</li>
+        <li>La convention PDF est générée et envoyée automatiquement par mail</li>
       </ul>
     </div>
+
     <div class="icard">
       <h3>📅 Le jour du stage</h3>
       <ul>
-      <li>L'élève doit se présenter avec la convention signée par son responsable légal et le chef d'établissement</li>d'établissement</strong></li>
-       <li>La signature de l'établissement d'accueil n'est pas requise à l'avance</li>
-        <li>Aucune nouvelle de notre part vaut <strong>acceptation du stage</strong></li>
-        <li>L'élève doit se présenter <strong>10 minutes avant</strong> le début</li>
+        <li>L'élève doit se présenter avec la convention signée par son responsable légal et le chef d'établissement</li>
+        <li>La signature de l'établissement d'accueil n'est pas requise à l'avance</li>
+        <li>Se présenter 10 minutes avant le début</li>
       </ul>
       <div class="callout c-red">⚠️ Sans signature du responsable légal ou du chef d'établissement, l'élève ne pourra pas être accepté.</div>
     </div>
+
     <div class="icard">
-      <div class="icard">
-  <h3>✅ Après le stage</h3>
-  <ul>
-    <li>L'élève repart avec la convention co-signée par le lycée, attestant de son passage</li>
-    <li>Aucune nouvelle de notre part vaut acceptation du stage</li>
-  </ul>
-  <div class="callout c-orange">⚡ Créneaux limités par établissement. Merci de ne réserver que pour des élèves réellement motivés.</div>
-</div>
+      <h3>✅ Après le stage</h3>
+      <ul>
+        <li>L'élève repart avec la convention co-signée par le lycée, attestant de son passage</li>
+        <li>Aucune nouvelle de notre part vaut acceptation du stage</li>
+      </ul>
+      <div class="callout c-orange">⚡ Créneaux limités par établissement. Merci de ne réserver que pour des élèves réellement motivés.</div>
+    </div>
+
+  </div>
+</section>
 
 <section class="actions-section">
   <span class="sec-tag">Accès rapide</span>
   <h2 class="sec-title">Par où commencer ?</h2>
   <div class="actions-grid">
     <div class="acard feat" onclick="openModal()">
-      <div class="aicon">🗓️</div>
+      <div class="aicon">🗓</div>
       <div class="atitle">Faire une réservation</div>
       <p class="adesc">Réservez un mini-stage pour un élève. Accès réservé aux établissements avec adresse académique.</p>
       <button class="abtn">Accéder →</button>
@@ -190,7 +178,7 @@
     <a class="acard" href="/demander-mdp">
       <div class="aicon">🔑</div>
       <div class="atitle">Recevoir le mot de passe</div>
-      <p class="adesc">Recevez votre mot de passe en 1 minute sur votre adresse @ac-versailles.fr / @ac-creteil.fr / @ac-paris.fr.</p>
+      <p class="adesc">Recevez votre mot de passe en 1 minute sur votre adresse @ac-versailles.fr, @ac-creteil.fr ou @ac-paris.fr.</p>
       <span class="abtn">Demander →</span>
     </a>
     <a class="acard" href="/gerer">
@@ -217,10 +205,11 @@
   </div>
 </div>
 {% endblock %}
+
 {% block extra_js %}
 <script>
 const obs = new IntersectionObserver(entries=>{entries.forEach(e=>{if(e.isIntersecting){e.target.style.opacity='1';e.target.style.transform='translateY(0)'}})},{threshold:.1});
-document.querySelectorAll('.icard,.fcard,.acard,.stat').forEach(el=>{el.style.opacity='0';el.style.transform='translateY(20px)';el.style.transition='opacity .5s ease,transform .5s ease';obs.observe(el)});
+document.querySelectorAll('.icard,.acard,.stat').forEach(el=>{el.style.opacity='0';el.style.transform='translateY(20px)';el.style.transition='opacity .5s ease,transform .5s ease';obs.observe(el)});
 function openModal(){document.getElementById('modal').classList.add('open');setTimeout(()=>document.getElementById('pwd').focus(),100)}
 function closeModal(){document.getElementById('modal').classList.remove('open');document.getElementById('pwd').value='';document.getElementById('merr').style.display='none'}
 function submitPwd(){const p=document.getElementById('pwd').value.trim();if(!p)return;window.location.href=`/reservation?pwd=${encodeURIComponent(p)}`}
