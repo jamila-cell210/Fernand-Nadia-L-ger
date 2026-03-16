@@ -38,7 +38,8 @@ FORMATIONS = [
     {'id': 'bp-aepa', 'niveau': 'BAC PRO', 'nom': 'Animation Enfance et Personnes Âgées',                  'emoji': '🎭', 'niveaux_eleves': ['4ème','3ème','2nde']},
     {'id': 'bp-assp',       'niveau': 'BAC PRO', 'nom': 'Accompagnement Soins et Services à la Personne',  'emoji': '🏥',  'niveaux_eleves': ['4ème','3ème','2nde']},
     {'id': 'bp-hps',        'niveau': 'BAC PRO', 'nom': 'Hygiène Propreté et Stérilisation',               'emoji': '🏨',  'niveaux_eleves': ['4ème','3ème','2nde']},
-]
+    {'id': 'bt-st2s', 'niveau': 'BAC TECHNO', 'nom': 'Sciences et Technologies de la Santé et du Social','emoji': '🔬', 'niveaux_eleves': ['4ème', '3ème','2nde']}
+    ,]
 
 db = SQLAlchemy(app)
 
