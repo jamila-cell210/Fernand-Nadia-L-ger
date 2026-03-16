@@ -99,10 +99,10 @@
   <div class="hero-inner">
     <div>
       <div class="badge"><div class="dot"></div> Réservations ouvertes 2025–2026</div>
-     Venez explorer<br><em>nos formations</em>
-      <p class="desc">Le Lycée Fernand et Nadia Léger accueille les élèves de 4ème, 3ème et 2nde pour des mini-stages d'observation de 2 à 4h — une occasion unique d'explorer nos filières avant de s'orienter.</p>
+   <h1>Découvrez nos<br>formations<br><em>autrement</em></h1>
+      <p class="desc">Le Lycée Fernand et Nadia Léger accueille les élèves de 4ème, 3ème et 2nde pour des mini-stages de 2 à 4h — une occasion unique d'explorer nos filières avant de s'orienter.</p>
       <div class="hero-ctas">
-        <button class="btn-primary" onclick="openModal()">🗓 Faire une réservation</button>
+        <button class="btn-primary" onclick="openModal()"> Faire une réservation</button>
         <a href="#infos" class="btn-outline">En savoir plus</a>
       </div>
     </div>
@@ -124,11 +124,11 @@
 
 <div class="stats-bar">
   <div class="stats-inner">
-    <div class="stat"><span style="font-size:1.6rem">🎓</span><div><div class="stat-num">8</div><div class="stat-lbl">Formations<br>disponibles</div></div></div>
+    <div class="stat"><span style="font-size:1.6rem">🎓</span><div><div class="stat-num">9</div><div class="stat-lbl">Formations<br>disponibles</div></div></div>
     <div class="sdiv"></div>
     <div class="stat"><span style="font-size:1.6rem">⏱</span><div><div class="stat-num">2–4h</div><div class="stat-lbl">Durée des<br>mini-stages</div></div></div>
     <div class="sdiv"></div>
-    <div class="stat"><span style="font-size:1.6rem">🎒</span><div><div class="stat-num">4e·3e·2nde</div><div class="stat-lbl">Niveaux<br>accueillis</div></div></div>
+    <div class="stat"><span style="font-size:1.6rem">🎒</span><div><div class="stat-num">4e à la 2nde</div><div class="stat-lbl">Niveaux<br>accueillis</div></div></div>
     <div class="sdiv"></div>
     <div class="stat"><span style="font-size:1.6rem">📄</span><div><div class="stat-num">Auto</div><div class="stat-lbl">Convention<br>générée par mail</div></div></div>
   </div>
@@ -151,7 +151,7 @@
     <div class="icard">
       <h3>📋 Comment réserver ?</h3>
       <ul>
-        <li>Cliquez sur <strong>"Faire une réservation"</strong> et saisissez votre mot de passe</li>
+        <li>Cliquez sur <strong>"Faire une réservation"</strong> et saisissez votre mot de passe</li></li>
         <li>Choisissez la <strong>formation</strong> et le <strong>créneau</strong> souhaité</li>
         <li>Remplissez les coordonnées de l'élève et de l'établissement</li>
         <li>La <strong>convention PDF</strong> est générée et envoyée automatiquement</li>
@@ -174,25 +174,6 @@
         <li>Absence de retour de notre part = <strong>stage accepté</strong></li>
       </ul>
       <div class="callout c-orange">⚡ Créneaux limités par établissement. Merci de ne réserver que pour des élèves réellement motivés.</div>
-    </div>
-  </div>
-</section>
-
-<section class="f-section" id="formations">
-  <div class="f-inner">
-    <span class="sec-tag">Nos filières</span>
-    <h2 class="sec-title">8 formations ouvertes aux mini-stages</h2>
-    <div class="f-grid">
-      {% for f in formations %}
-      <div class="fcard">
-        <div class="fcard-top">
-          <div class="femoji">{{f.emoji}}</div>
-          <span class="fbadge {{'fb-cap' if f.niveau=='CAP' else 'fb-bac'}}">{{f.niveau}}</span>
-        </div>
-        <div class="fcard-name">{{f.nom}}</div>
-        <div class="fcard-level">{{f.niveaux_eleves|join(', ')}}</div>
-      </div>
-      {% endfor %}
     </div>
   </div>
 </section>
