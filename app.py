@@ -30,16 +30,16 @@ LYCEE = {
 }
 
 FORMATIONS = [
-    {'id': 'cap-coiffure',  'niveau': 'CAP',     'nom': 'Coiffure',                                        'emoji': '✂️',  'niveaux_eleves': ['4ème','3ème']},
-    {'id': 'cap-psr',       'niveau': 'CAP',     'nom': 'Production et Service en Restauration',           'emoji': '🍽️', 'niveaux_eleves': ['4ème','3ème']},
-    {'id': 'cap-aepe',      'niveau': 'CAP',     'nom': 'Accompagnement Éducatif Petite Enfance',          'emoji': '🧒',  'niveaux_eleves': ['4ème','3ème']},
-    {'id': 'bp-coiffure',   'niveau': 'BAC PRO', 'nom': 'Coiffure',                                        'emoji': '💇',  'niveaux_eleves': ['4ème','3ème','2nde']},
-    {'id': 'bp-ecp',        'niveau': 'BAC PRO', 'nom': 'Esthétique Cosmétique et Parfumerie',             'emoji': '💅',  'niveaux_eleves': ['4ème','3ème','2nde']},
-    {'id': 'bp-aepa', 'niveau': 'BAC PRO', 'nom': 'Animation Enfance et Personnes Âgées',                  'emoji': '🎭', 'niveaux_eleves': ['4ème','3ème','2nde']},
-    {'id': 'bp-assp',       'niveau': 'BAC PRO', 'nom': 'Accompagnement Soins et Services à la Personne',  'emoji': '🏥',  'niveaux_eleves': ['4ème','3ème','2nde']},
-    {'id': 'bp-hps',        'niveau': 'BAC PRO', 'nom': 'Hygiène Propreté et Stérilisation',               'emoji': '🏨',  'niveaux_eleves': ['4ème','3ème','2nde']},
-    {'id': 'bt-st2s', 'niveau': 'BAC TECHNO', 'nom': 'Sciences et Technologies de la Santé et du Social','emoji': '🔬', 'niveaux_eleves': ['4ème', '3ème','2nde']}
-    ,]
+    {'id': 'cap-coiffure', 'niveau': 'CAP', 'nom': 'Coiffure', 'emoji': '✂️', 'niveaux_eleves': ['4ème','3ème']},
+    {'id': 'cap-psr', 'niveau': 'CAP', 'nom': 'Production et Service en Restauration', 'emoji': '🍽️', 'niveaux_eleves': ['4ème','3ème']},
+    {'id': 'cap-aepe', 'niveau': 'CAP', 'nom': 'Accompagnement Éducatif Petite Enfance', 'emoji': '🧒', 'niveaux_eleves': ['4ème','3ème']},
+    {'id': 'bp-coiffure', 'niveau': 'BAC PRO', 'nom': 'Coiffure', 'emoji': '💇', 'niveaux_eleves': ['3ème','2nde']},
+    {'id': 'bp-ecp', 'niveau': 'BAC PRO', 'nom': 'Esthétique Cosmétique et Parfumerie', 'emoji': '💅', 'niveaux_eleves': ['3ème','2nde']},
+    {'id': 'bp-aepa', 'niveau': 'BAC PRO', 'nom': 'Animation Enfance et Personnes Âgées', 'emoji': '👶', 'niveaux_eleves': ['3ème','2nde']},
+    {'id': 'bp-assp', 'niveau': 'BAC PRO', 'nom': 'Accompagnement Soins et Services à la Personne', 'emoji': '🏥', 'niveaux_eleves': ['3ème','2nde']},
+    {'id': 'bp-hps', 'niveau': 'BAC PRO', 'nom': 'Hygiène Propreté et Stérilisation', 'emoji': '🧹', 'niveaux_eleves': ['3ème','2nde']},
+    {'id': 'bt-st2s', 'niveau': 'BAC TECHNO', 'nom': 'Sciences et Technologies de la Santé et du Social', 'emoji': '🔬', 'niveaux_eleves': ['3ème','2nde']},
+]
 
 db = SQLAlchemy(app)
 
