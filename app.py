@@ -473,7 +473,11 @@ def confirmer_attente(token):
     flash("Place confirmée ! Complétez votre réservation.", "success")
     cr = Creneau.query.get(att.creneau_id)
     return redirect(url_for('reservation') + f"?creneau_preselect={att.creneau_id}")
-
+    
+@app.route('/rgpd')
+def rgpd():
+    return render_template('rgpd.html')
+    
 @app.route('/gerer', methods=['GET','POST'])
 def gerer():
     resa = None
