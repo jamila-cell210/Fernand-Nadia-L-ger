@@ -3,16 +3,34 @@
 {% block extra_css %}
 <style>
 .page-hero{background:linear-gradient(135deg,#f0f7ff,#e8f3fd);padding:3rem 2.5rem 2rem;border-bottom:1.5px solid var(--border)}
-.page-hero-inner{max-width:860px;margin:0 auto}
+.page-hero-inner{max-width:900px;margin:0 auto}
 .etab-badge{display:inline-flex;align-items:center;gap:.4rem;background:rgba(46,158,107,.1);border:1px solid rgba(46,158,107,.3);color:#2e9e6b;font-size:.74rem;font-weight:600;padding:.3rem .8rem;border-radius:50px;margin-bottom:.9rem}
 .page-hero h1{font-family:'Libre Baskerville',serif;font-size:1.9rem;font-weight:700;color:var(--dark);margin-bottom:.4rem}
 .page-hero p{font-size:.88rem;color:var(--muted)}
-.resa-wrap{max-width:860px;margin:2.5rem auto;padding:0 2.5rem 4rem}
+.resa-wrap{max-width:900px;margin:2.5rem auto;padding:0 2.5rem 4rem}
 .fsection{background:#fff;border:1.5px solid var(--border);border-radius:16px;padding:1.8rem 2rem;margin-bottom:1.5rem}
 .fsection h2{font-family:'Libre Baskerville',serif;font-size:1.1rem;font-weight:700;color:var(--dark);margin-bottom:1.3rem;display:flex;align-items:center;gap:.5rem}
-.ftabs{display:flex;flex-wrap:wrap;gap:.5rem;margin-bottom:1.3rem}
-.ftab{font-size:.79rem;font-weight:600;padding:.42rem .95rem;border-radius:8px;border:1.5px solid var(--border);background:#fff;color:var(--muted);cursor:pointer;transition:all .2s;font-family:'Outfit',sans-serif}
-.ftab:hover{border-color:var(--blue);color:var(--blue)}.ftab.active{background:var(--blue);color:#fff;border-color:var(--blue)}
+.fsection h3{font-size:.95rem;font-weight:700;color:var(--dark);margin-bottom:1rem;padding-bottom:.5rem;border-bottom:1px solid var(--border)}
+
+/* FORMATIONS GRID */
+.formations-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:.7rem;margin-bottom:1.2rem}
+.fcard-btn{background:#fff;border:1.5px solid var(--border);border-radius:12px;padding:1rem;cursor:pointer;transition:all .2s;text-align:left;font-family:'Outfit',sans-serif;width:100%}
+.fcard-btn:hover{border-color:var(--blue);background:var(--pale)}
+.fcard-btn.active{border-color:var(--blue);background:var(--pale);box-shadow:0 0 0 3px rgba(21,101,192,.1)}
+.fcard-emoji{font-size:1.4rem;margin-bottom:.4rem}
+.fcard-niveau{font-size:.63rem;font-weight:700;padding:.15rem .5rem;border-radius:4px;letter-spacing:.04em;display:inline-block;margin-bottom:.3rem}
+.fn-cap{background:var(--light);color:var(--blue)}
+.fn-bac{background:#fff3e0;color:#d07010}
+.fn-techno{background:#f3e5f5;color:#7b1fa2}
+.fcard-nom{font-size:.82rem;font-weight:700;color:var(--dark);line-height:1.3}
+
+/* DESCRIPTION FORMATION */
+.f-desc{background:var(--pale);border:1px solid var(--border);border-radius:10px;padding:.85rem 1rem;font-size:.83rem;color:var(--muted);margin-bottom:1.2rem;display:none}
+.f-desc.show{display:block}
+
+/* CRÉNEAUX */
+.cren-container{display:none}
+.cren-container.show{display:block}
 .cren-grid{display:grid;grid-template-columns:1fr 1fr;gap:.75rem}
 .cren-card{border:1.5px solid var(--border);border-radius:12px;padding:1rem 1.1rem;cursor:pointer;transition:all .2s;position:relative}
 .cren-card:hover:not(.full){border-color:var(--blue);background:var(--pale)}
@@ -24,106 +42,136 @@
 .cren-meta{font-size:.73rem;color:var(--muted);display:flex;gap:.8rem;flex-wrap:wrap;margin-bottom:.4rem}
 .pbadge{font-size:.68rem;font-weight:700;padding:.18rem .52rem;border-radius:5px}
 .p-ok{background:#e8f5ee;color:#1a7a4a}.p-warn{background:#fff8ee;color:#c07010}.p-full{background:#fef0f0;color:#b03030}
-.no-cren{text-align:center;padding:2rem;color:var(--muted);font-size:.88rem;background:var(--pale);border-radius:12px}
+.no-cren{text-align:center;padding:1.5rem;color:var(--muted);font-size:.87rem;background:var(--pale);border-radius:10px;border:1px dashed var(--border)}
+
+/* FORMULAIRE */
 .fgrid{display:grid;grid-template-columns:1fr 1fr;gap:1rem}
 .fg{display:flex;flex-direction:column;gap:.35rem}.fg.full{grid-column:1/-1}
 .fg label{font-size:.78rem;font-weight:600;color:var(--muted);letter-spacing:.02em}
-.fg input,.fg select{border:1.5px solid var(--border);border-radius:10px;padding:.72rem .95rem;font-size:.88rem;color:var(--text);font-family:'Outfit',sans-serif;outline:none;transition:border-color .2s;background:#fff}
-.fg input:focus,.fg select:focus{border-color:var(--blue);box-shadow:0 0 0 3px rgba(21,101,192,.1)}
-.fg input::placeholder{color:#a0b4c5}
+.fg input,.fg select,.fg textarea{border:1.5px solid var(--border);border-radius:10px;padding:.72rem .95rem;font-size:.88rem;color:var(--text);font-family:'Outfit',sans-serif;outline:none;transition:border-color .2s;background:#fff}
+.fg input:focus,.fg select:focus,.fg textarea:focus{border-color:var(--blue);box-shadow:0 0 0 3px rgba(21,101,192,.1)}
+.fg input::placeholder,.fg textarea::placeholder{color:#a0b4c5}
+.fg textarea{resize:vertical;min-height:80px}
 .req{color:var(--red)}
 .submit-area{text-align:center;margin-top:2rem}
 .submit-area p{font-size:.79rem;color:var(--muted);margin-top:.9rem}
-.attente-btn{display:inline-flex;align-items:center;gap:.4rem;background:#fff8ee;color:#c07010;border:1.5px solid #fde8b0;border-radius:10px;padding:.65rem 1.2rem;font-size:.84rem;font-weight:600;cursor:pointer;font-family:'Outfit',sans-serif;transition:all .2s}
+.attente-btn{display:inline-flex;align-items:center;gap:.4rem;background:#fff8ee;color:#c07010;border:1.5px solid #fde8b0;border-radius:10px;padding:.55rem 1rem;font-size:.8rem;font-weight:600;cursor:pointer;font-family:'Outfit',sans-serif;transition:all .2s;margin-top:.4rem}
 .attente-btn:hover{background:#fde8b0}
-@media(max-width:600px){.resa-wrap{padding:0 1.2rem 3rem}.cren-grid,.fgrid{grid-template-columns:1fr}.fg.full{grid-column:1}}
+@media(max-width:700px){
+  .resa-wrap{padding:0 1.2rem 3rem}
+  .formations-grid{grid-template-columns:1fr 1fr}
+  .cren-grid,.fgrid{grid-template-columns:1fr}
+  .fg.full{grid-column:1}
+}
+@media(max-width:450px){.formations-grid{grid-template-columns:1fr}}
 </style>
 {% endblock %}
+
 {% block content %}
 <div class="page-hero">
   <div class="page-hero-inner">
     <div class="etab-badge">✅ Connecté — {{ etab_email }}</div>
     <h1>🗓 Réserver un mini-stage</h1>
-    <p>Choisissez une formation, sélectionnez un créneau et remplissez les informations de l'élève.</p>
+    <p>Sélectionnez une formation, choisissez un créneau, puis remplissez les informations.</p>
   </div>
 </div>
+
 <div class="resa-wrap">
   <form method="POST" id="resa-form">
     <input type="hidden" name="creneau_id" id="creneau_id">
 
-   <!-- FORMATION -->
-<div class="fsection">
-  <h2>🎓 Choisissez une formation</h2>
-  <div class="ftabs">
-    {% for f in formations %}
-    <button type="button" class="ftab" onclick="selectFormation(this,'{{f.id}}')">
-      {{f.emoji}} {{f.niveau}} {{f.nom}}
-    </button>
-    {% endfor %}
-  </div>
-  {% for f in formations %}
-  <div id="crs-{{f.id}}" class="cren-container" style="display:none">
-    <div style="font-size:.83rem;color:var(--muted);margin-bottom:1rem;padding:.7rem 1rem;background:var(--pale);border-radius:8px;">
-      {{f.description}}
-    </div>
-    {% if f.id in par_formation and par_formation[f.id]|length > 0 %}
-    <div class="cren-grid">
-      {% for cr in par_formation[f.id] %}
-      <label class="cren-card {{'full' if cr.complet}}" onclick="{{'selectCreneau(this,'+cr.id|string+')' if not cr.complet}}">
-        <input type="radio" name="cren_radio" value="{{cr.id}}" {{'disabled' if cr.complet}}>
-        <div class="cren-date">📅 {{cr.date.strftime('%A %d %B %Y')|capitalize}}</div>
-        <div class="cren-time">⏱ {{cr.heure_debut}} – {{cr.heure_fin}}</div>
-        <div class="cren-meta">
-          {% if cr.salle %}<span>🚪 {{cr.salle}}</span>{% endif %}
-          {% if cr.professeur %}<span>👩‍🏫 {{cr.professeur}}</span>{% endif %}
+    <!-- ÉTAPE 1 : FORMATION -->
+    <div class="fsection">
+      <h2>🎓 1. Choisissez une formation</h2>
+      <div class="formations-grid">
+        {% for f in formations %}
+        <button type="button" class="fcard-btn" id="fbtn-{{f.id}}" onclick="selectFormation('{{f.id}}')">
+          <div class="fcard-emoji">{{f.emoji}}</div>
+          <span class="fcard-niveau {{'fn-cap' if f.niveau=='CAP' else ('fn-techno' if f.niveau=='BAC TECHNO' else 'fn-bac')}}">{{f.niveau}}</span>
+          <div class="fcard-nom">{{f.nom}}</div>
+        </button>
+        {% endfor %}
+      </div>
+
+      <!-- Description + créneaux par formation -->
+      {% for f in formations %}
+      <div class="f-desc" id="desc-{{f.id}}">
+        ℹ️ <strong>{{f.niveau}} {{f.nom}}</strong> — Ouvert aux élèves de <strong>{{f.niveaux_eleves|join(', ')}}</strong>.
+      </div>
+      <div class="cren-container" id="crs-{{f.id}}">
+        <h3>📅 Créneaux disponibles</h3>
+        {% if f.id in par_formation and par_formation[f.id]|length > 0 %}
+        <div class="cren-grid">
+          {% for cr in par_formation[f.id] %}
+          <label class="cren-card {{'full' if cr.complet}}" onclick="{{'selectCreneau(this,'+cr.id|string+')' if not cr.complet}}">
+            <input type="radio" name="cren_radio" value="{{cr.id}}" {{'disabled' if cr.complet}}>
+            <div class="cren-date">📅 {{cr.date.strftime('%A %d %B %Y')|capitalize}}</div>
+            <div class="cren-time">⏱ {{cr.heure_debut}} – {{cr.heure_fin}}</div>
+            <div class="cren-meta">
+              {% if cr.salle %}<span>🚪 Salle {{cr.salle}}</span>{% endif %}
+              {% if cr.professeur %}<span>👩‍🏫 {{cr.professeur}}</span>{% endif %}
+            </div>
+            {% if cr.complet %}
+              <span class="pbadge p-full">Complet</span>
+              <form method="POST" action="/liste-attente" style="display:block;margin-top:.5rem">
+                <input type="hidden" name="creneau_id" value="{{cr.id}}">
+                <button type="submit" class="attente-btn" onclick="event.stopPropagation()">📋 M'inscrire en liste d'attente</button>
+              </form>
+            {% elif cr.places_restantes == 1 %}
+              <span class="pbadge p-warn">Dernière place !</span>
+            {% else %}
+              <span class="pbadge p-ok">{{cr.places_restantes}} places disponibles</span>
+            {% endif %}
+          </label>
+          {% endfor %}
         </div>
-        {% if cr.complet %}
-          <span class="pbadge p-full">Complet</span>
-          <form method="POST" action="/liste-attente" style="display:inline;margin-top:.4rem">
-            <input type="hidden" name="creneau_id" value="{{cr.id}}">
-            <button type="submit" class="attente-btn" onclick="event.stopPropagation()">📋 Liste d'attente</button>
-          </form>
-        {% elif cr.places_restantes == 1 %}
-          <span class="pbadge p-warn">1 place restante</span>
         {% else %}
-          <span class="pbadge p-ok">{{cr.places_restantes}} places disponibles</span>
+        <div class="no-cren">
+          Aucun créneau disponible pour cette formation pour le moment.<br>
+          <span style="font-size:.78rem">Revenez prochainement ou contactez-nous.</span>
+        </div>
         {% endif %}
-      </label>
+      </div>
       {% endfor %}
     </div>
-    {% else %}
-    <div class="no-cren">Aucun créneau disponible pour cette formation pour le moment.</div>
-    {% endif %}
-  </div>
-  {% endfor %}
-</div>
 
-    <!-- ÉLÈVE -->
+    <!-- ÉTAPE 2 : ÉLÈVE -->
     <div class="fsection">
-      <h2>🧑‍🎓 Informations de l'élève</h2>
+      <h2>🧍 2. Élève / Participant</h2>
       <div class="fgrid">
         <div class="fg"><label>Nom <span class="req">*</span></label><input type="text" name="eleve_nom" placeholder="NOM" required></div>
         <div class="fg"><label>Prénom <span class="req">*</span></label><input type="text" name="eleve_prenom" placeholder="Prénom" required></div>
         <div class="fg"><label>Classe actuelle</label><input type="text" name="eleve_classe" placeholder="Ex : 3ème B"></div>
         <div class="fg"><label>Date de naissance</label><input type="date" name="eleve_ddn"></div>
-        <div class="fg"><label>Nom du responsable légal</label><input type="text" name="resp_legal_nom" placeholder="Nom Prénom"></div>
-        <div class="fg"><label>Téléphone du responsable légal</label><input type="tel" name="resp_legal_tel" placeholder="06 00 00 00 00"></div>
+        <div class="fg"><label>Téléphone du responsable légal <span class="req">*</span></label><input type="tel" name="resp_legal_tel" placeholder="06 00 00 00 00" required></div>
+        <div class="fg"><label>Email du responsable légal</label><input type="email" name="resp_legal_email" placeholder="email@exemple.fr"></div>
       </div>
     </div>
 
-    <!-- ÉTABLISSEMENT -->
+    <!-- ÉTAPE 3 : ÉTABLISSEMENT -->
     <div class="fsection">
-      <h2>🏫 Informations de l'établissement</h2>
+      <h2>🏫 3. Établissement d'origine</h2>
       <div class="fgrid">
         <div class="fg full"><label>Nom de l'établissement <span class="req">*</span></label><input type="text" name="etab_nom" placeholder="Collège / Lycée..." required></div>
-        <div class="fg"><label>Ville</label><input type="text" name="etab_ville" placeholder="Ville"></div>
-        <div class="fg"><label>Nom du chef d'établissement <span class="req">*</span></label><input type="text" name="etab_contact" placeholder="M. / Mme..." required></div>
-        <div class="fg"><label>Téléphone</label><input type="tel" name="etab_tel" placeholder="01 00 00 00 00"></div>
+        <div class="fg"><label>Responsable de l'établissement <span class="req">*</span></label><input type="text" name="etab_contact" placeholder="M. / Mme..." required></div>
+        <div class="fg"><label>Téléphone établissement <span class="req">*</span></label><input type="tel" name="etab_tel" placeholder="01 00 00 00 00" required></div>
         <div class="fg full">
-          <label>Email de confirmation</label>
+          <label>Email établissement</label>
           <input type="email" value="{{etab_email}}" disabled style="background:#f5f5f5;color:#888">
           <span style="font-size:.71rem;color:var(--muted)">La convention sera envoyée à cette adresse.</span>
         </div>
+      </div>
+    </div>
+
+    <!-- ÉTAPE 4 : CONTACT -->
+    <div class="fsection">
+      <h2>👥 4. Contact en charge de l'élève</h2>
+      <div class="fgrid">
+        <div class="fg"><label>Nom du contact <span class="req">*</span></label><input type="text" name="contact_nom" placeholder="NOM" required></div>
+        <div class="fg"><label>Prénom du contact</label><input type="text" name="contact_prenom" placeholder="Prénom"></div>
+        <div class="fg"><label>Téléphone du contact <span class="req">*</span></label><input type="tel" name="contact_tel" placeholder="06 00 00 00 00" required></div>
+        <div class="fg"><label>Email du contact <span class="req">*</span></label><input type="email" name="contact_email" placeholder="prenom.nom@ac-versailles.fr" required></div>
+        <div class="fg full"><label>Remarques / Observations</label><textarea name="remarques" placeholder="Besoin d'accompagnement spécifique, précisions..."></textarea></div>
       </div>
     </div>
 
@@ -131,39 +179,58 @@
       <button type="submit" class="btn-primary" id="submit-btn" disabled style="opacity:.5;cursor:not-allowed">
         📄 Confirmer et recevoir la convention par mail
       </button>
-      <p>⚠️ La convention doit être signée par le responsable légal et le chef d'établissement avant le stage.</p>
+      <p>⚠️ La convention générée devra être signée par le responsable légal et le chef d'établissement avant le jour du stage.</p>
     </div>
   </form>
 </div>
 {% endblock %}
+
 {% block extra_js %}
 <script>
 let curF = null;
-function selectFormation(btn, fid) {
-  document.querySelectorAll('.ftab').forEach(b=>b.classList.remove('active'));
-  btn.classList.add('active');
-  document.querySelectorAll('.cren-container').forEach(c=>c.style.display='none');
-  document.getElementById('no-cren').style.display='none';
-  const el = document.getElementById('crs-'+fid);
-  if(el) el.style.display='block'; else document.getElementById('no-cren').style.display='block';
+
+function selectFormation(fid) {
+  // Reset tous les boutons
+  document.querySelectorAll('.fcard-btn').forEach(b => b.classList.remove('active'));
+  document.querySelectorAll('.f-desc').forEach(d => d.classList.remove('show'));
+  document.querySelectorAll('.cren-container').forEach(c => c.classList.remove('show'));
+
+  // Active le bouton cliqué
+  document.getElementById('fbtn-' + fid).classList.add('active');
+  document.getElementById('desc-' + fid).classList.add('show');
+  document.getElementById('crs-' + fid).classList.add('show');
+
   curF = fid;
-  document.getElementById('creneau_id').value='';
-  document.querySelectorAll('.cren-card').forEach(c=>c.classList.remove('selected'));
+  document.getElementById('creneau_id').value = '';
+  document.querySelectorAll('.cren-card').forEach(c => c.classList.remove('selected'));
   updateBtn();
+
+  // Scroll vers les créneaux
+  setTimeout(() => {
+    document.getElementById('crs-' + fid).scrollIntoView({behavior: 'smooth', block: 'nearest'});
+  }, 100);
 }
+
 function selectCreneau(card, id) {
-  document.querySelectorAll('.cren-card').forEach(c=>c.classList.remove('selected'));
+  document.querySelectorAll('.cren-card').forEach(c => c.classList.remove('selected'));
   card.classList.add('selected');
-  document.getElementById('creneau_id').value=id;
+  document.getElementById('creneau_id').value = id;
   updateBtn();
 }
+
 function updateBtn() {
-  const btn=document.getElementById('submit-btn');
-  const ok=curF!==null && document.getElementById('creneau_id').value!=='';
-  btn.disabled=!ok; btn.style.opacity=ok?'1':'.5'; btn.style.cursor=ok?'pointer':'not-allowed';
+  const btn = document.getElementById('submit-btn');
+  const ok = curF !== null && document.getElementById('creneau_id').value !== '';
+  btn.disabled = !ok;
+  btn.style.opacity = ok ? '1' : '.5';
+  btn.style.cursor = ok ? 'pointer' : 'not-allowed';
 }
-document.getElementById('resa-form').addEventListener('submit',e=>{
-  if(!document.getElementById('creneau_id').value){e.preventDefault();alert('Veuillez sélectionner un créneau.');}
+
+document.getElementById('resa-form').addEventListener('submit', e => {
+  if (!document.getElementById('creneau_id').value) {
+    e.preventDefault();
+    alert('Veuillez sélectionner un créneau.');
+  }
 });
 </script>
 {% endblock %}
