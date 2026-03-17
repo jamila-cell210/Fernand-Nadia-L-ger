@@ -30,17 +30,16 @@ LYCEE = {
 }
 
 FORMATIONS = [
-    {'id': 'cap-coiffure', 'niveau': 'CAP', 'nom': 'Coiffure', 'emoji': '✂️', 'niveaux_eleves': ['4ème','3ème']},
-    {'id': 'cap-psr', 'niveau': 'CAP', 'nom': 'Production et Service en Restauration', 'emoji': '🍽️', 'niveaux_eleves': ['4ème','3ème']},
-    {'id': 'cap-aepe', 'niveau': 'CAP', 'nom': 'Accompagnement Éducatif Petite Enfance', 'emoji': '🧒', 'niveaux_eleves': ['4ème','3ème']},
-    {'id': 'bp-coiffure', 'niveau': 'BAC PRO', 'nom': 'Coiffure', 'emoji': '💇', 'niveaux_eleves': ['3ème','2nde']},
-    {'id': 'bp-ecp', 'niveau': 'BAC PRO', 'nom': 'Esthétique Cosmétique et Parfumerie', 'emoji': '💅', 'niveaux_eleves': ['3ème','2nde']},
-    {'id': 'bp-aepa', 'niveau': 'BAC PRO', 'nom': 'Animation Enfance et Personnes Âgées', 'emoji': '👶', 'niveaux_eleves': ['3ème','2nde']},
-    {'id': 'bp-assp', 'niveau': 'BAC PRO', 'nom': 'Accompagnement Soins et Services à la Personne', 'emoji': '🏥', 'niveaux_eleves': ['3ème','2nde']},
-    {'id': 'bp-hps', 'niveau': 'BAC PRO', 'nom': 'Hygiène Propreté et Stérilisation', 'emoji': '🧹', 'niveaux_eleves': ['3ème','2nde']},
-    {'id': 'bt-st2s', 'niveau': 'BAC TECHNO', 'nom': 'Sciences et Technologies de la Santé et du Social', 'emoji': '🔬', 'niveaux_eleves': ['3ème','2nde']},
+    {'id': 'cap-coiffure', 'niveau': 'CAP', 'nom': 'Coiffure', 'emoji': '✂️', 'niveaux_eleves': ['4ème','3ème'], 'onisep': 'https://www.onisep.fr/ressources/univers-formation/formations/lycees/cap-metiers-de-la-coiffure'},
+    {'id': 'cap-psr', 'niveau': 'CAP', 'nom': 'Production et Service en Restauration', 'emoji': '🍽️', 'niveaux_eleves': ['4ème','3ème'], 'onisep': 'https://www.onisep.fr/ressources/univers-formation/formations/lycees/cap-production-et-service-en-restaurations-rapide-collective-cafeteria'},
+    {'id': 'cap-aepe', 'niveau': 'CAP', 'nom': 'Accompagnement Éducatif Petite Enfance', 'emoji': '🧒', 'niveaux_eleves': ['4ème','3ème'], 'onisep': 'https://www.onisep.fr/ressources/univers-formation/formations/lycees/cap-accompagnant-educatif-petite-enfance'},
+    {'id': 'bp-coiffure', 'niveau': 'BAC PRO', 'nom': 'Coiffure', 'emoji': '💇', 'niveaux_eleves': ['3ème','2nde'], 'onisep': 'https://www.onisep.fr/ressources/univers-formation/formations/lycees/bac-pro-metiers-de-la-coiffure'},
+    {'id': 'bp-ecp', 'niveau': 'BAC PRO', 'nom': 'Esthétique Cosmétique et Parfumerie', 'emoji': '💅', 'niveaux_eleves': ['3ème','2nde'], 'onisep': 'https://www.onisep.fr/ressources/univers-formation/formations/lycees/bac-pro-esthetique-cosmetique-parfumerie'},
+    {'id': 'bp-aepa', 'niveau': 'BAC PRO', 'nom': 'Animation Enfance et Personnes Âgées', 'emoji': '👶', 'niveaux_eleves': ['3ème','2nde'], 'onisep': 'https://www.onisep.fr/ressources/univers-formation/formations/lycees/bac-pro-animation-enfance-et-personnes-agees'},
+    {'id': 'bp-assp', 'niveau': 'BAC PRO', 'nom': 'Accompagnement Soins et Services à la Personne', 'emoji': '🏥', 'niveaux_eleves': ['3ème','2nde'], 'onisep': 'https://www.onisep.fr/ressources/univers-formation/formations/lycees/bac-pro-accompagnement-soins-et-services-a-la-personne'},
+    {'id': 'bp-hps', 'niveau': 'BAC PRO', 'nom': 'Hygiène Propreté et Stérilisation', 'emoji': '🧹', 'niveaux_eleves': ['3ème','2nde'], 'onisep': 'https://www.onisep.fr/ressources/univers-formation/formations/lycees/bac-pro-hygiene-proprete-sterilisation'},
+    {'id': 'bt-st2s', 'niveau': 'BAC TECHNO', 'nom': 'Sciences et Technologies de la Santé et du Social', 'emoji': '🔬', 'niveaux_eleves': ['3ème','2nde'], 'onisep': 'https://www.onisep.fr/ressources/univers-formation/formations/lycees/bac-techno-st2s-sciences-et-technologies-de-la-sante-et-du-social'},
 ]
-
 db = SQLAlchemy(app)
 
 # ── MODÈLES ─────────────────────────────────────────────────
