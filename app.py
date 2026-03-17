@@ -1,7 +1,11 @@
 from flask import Flask, render_template, request, redirect, url_for, session, flash, send_file, jsonify
 from flask_sqlalchemy import SQLAlchemy
 from datetime import datetime, date, timedelta
-import random, string, os, io, requests
+import random, string, os, io, requests, smtplib
+from email.mime.multipart import MIMEMultipart
+from email.mime.text import MIMEText
+from email.mime.base import MIMEBase
+from email import encoders
 from functools import wraps
 from reportlab.lib.pagesizes import A4
 from reportlab.lib import colors
@@ -16,9 +20,8 @@ app.config['SQLALCHEMY_DATABASE_URI'] = os.environ.get('DATABASE_URL', 'sqlite:/
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 
 # ── CONFIG ──────────────────────────────────────────────────
-BREVO_API_KEY = os.environ.get('BREVO_API_KEY', '')
-MAIL_FROM = os.environ.get('MAIL_FROM', 'jamila.zenid@flargenteuil.com')
-MAIL_FROM_NAME = os.environ.get('MAIL_FROM_NAME', 'Mini-Stages Lycée Fernand et Nadia Léger')
+MAIL_FROM = os.environ.get('MAIL_FROM', 'ministagesfernandleger@gmail.com')
+MAIL_PASS = os.environ.get('MAIL_PASS', '')
 ADMIN_PASS = os.environ.get('ADMIN_PASS', 'admin2025')
 
 ACADEMIES = ['ac-versailles.fr', 'ac-creteil.fr', 'ac-paris.fr']
@@ -40,6 +43,7 @@ FORMATIONS = [
     {'id': 'bp-hps', 'niveau': 'BAC PRO', 'nom': 'Hygiène Propreté et Stérilisation', 'emoji': '🧹', 'niveaux_eleves': ['3ème','2nde'], 'onisep': 'https://www.onisep.fr/ressources/univers-formation/formations/lycees/bac-pro-hygiene-proprete-sterilisation'},
     {'id': 'bt-st2s', 'niveau': 'BAC TECHNO', 'nom': 'Sciences et Technologies de la Santé et du Social', 'emoji': '🔬', 'niveaux_eleves': ['3ème','2nde'], 'onisep': 'https://www.onisep.fr/ressources/univers-formation/formations/lycees/bac-techno-st2s-sciences-et-technologies-de-la-sante-et-du-social'},
 ]
+
 db = SQLAlchemy(app)
 
 # ── MODÈLES ─────────────────────────────────────────────────
@@ -115,25 +119,24 @@ def email_ok(email):
     return any(email.lower().strip().endswith('@' + a) for a in ACADEMIES)
 
 def envoyer_mail(dest, sujet, html, pieces=None):
-    """Envoi via Brevo API"""
-    if not BREVO_API_KEY:
-        print(f"[MAIL SIMULÉ] À: {dest} | Sujet: {sujet}")
-        return True
-    payload = {
-        "sender": {"name": MAIL_FROM_NAME, "email": MAIL_FROM},
-        "to": [{"email": dest}],
-        "subject": sujet,
-        "htmlContent": html,
-    }
-    if pieces:
-        payload["attachment"] = [{"name": n, "content": __import__('base64').b64encode(d).decode()} for n, d in pieces]
     try:
-        r = requests.post(
-            "https://api.brevo.com/v3/smtp/email",
-            headers={"api-key": BREVO_API_KEY, "Content-Type": "application/json"},
-            json=payload, timeout=10
-        )
-        return r.status_code in (200, 201)
+        msg = MIMEMultipart('mixed')
+        msg['From'] = MAIL_FROM
+        msg['To'] = dest
+        msg['Subject'] = sujet
+        msg.attach(MIMEText(html, 'html', 'utf-8'))
+        if pieces:
+            for nom, data in pieces:
+                part = MIMEBase('application', 'octet-stream')
+                part.set_payload(data)
+                encoders.encode_base64(part)
+                part.add_header('Content-Disposition', f'attachment; filename="{nom}"')
+                msg.attach(part)
+        with smtplib.SMTP('smtp.gmail.com', 587) as server:
+            server.starttls()
+            server.login(MAIL_FROM, MAIL_PASS)
+            server.send_message(msg)
+        return True
     except Exception as e:
         print(f"Erreur mail: {e}")
         return False
@@ -142,7 +145,6 @@ def get_formation(fid):
     return next((f for f in FORMATIONS if f['id'] == fid), None)
 
 def notifier_suivant_attente(creneau_id):
-    """Notifie le prochain en liste d'attente si une place se libère"""
     cr = Creneau.query.get(creneau_id)
     if not cr or cr.complet:
         return
@@ -157,7 +159,6 @@ def notifier_suivant_attente(creneau_id):
     html = f"""
     <div style="font-family:Arial,sans-serif;max-width:560px;margin:0 auto;padding:30px;background:#f0f7ff;border-radius:12px;">
       <h2 style="color:#1565c0;">🎉 Une place s'est libérée !</h2>
-      <p>Bonjour,</p>
       <p>Une place vient de se libérer sur le créneau suivant :</p>
       <div style="background:#fff;border:2px solid #1565c0;border-radius:8px;padding:16px;margin:16px 0;">
         <b>Formation :</b> {nom_formation}<br>
@@ -165,7 +166,7 @@ def notifier_suivant_attente(creneau_id):
         <b>Horaires :</b> {cr.heure_debut} – {cr.heure_fin}<br>
         <b>Salle :</b> {cr.salle or '—'}
       </div>
-      <p>Vous avez <strong>24 heures</strong> pour confirmer votre place en cliquant ci-dessous :</p>
+      <p>Vous avez <strong>24 heures</strong> pour confirmer votre place :</p>
       <a href="{lien}" style="display:inline-block;background:#1565c0;color:#fff;padding:12px 24px;border-radius:8px;text-decoration:none;font-weight:bold;">Confirmer ma place →</a>
       <p style="color:#888;font-size:12px;margin-top:20px;">Sans confirmation dans les 24h, la place sera proposée au suivant.</p>
     </div>
@@ -181,45 +182,42 @@ def generer_convention_pdf(resa):
                             rightMargin=1.8*cm, leftMargin=1.8*cm,
                             topMargin=1.5*cm, bottomMargin=1.5*cm)
     bleu = colors.HexColor('#1565c0')
-    styles = getSampleStyleSheet()
     story = []
 
     titre = ParagraphStyle('t', fontSize=15, fontName='Helvetica-Bold', textColor=bleu, alignment=TA_CENTER, spaceAfter=4)
-    sous  = ParagraphStyle('s', fontSize=9,  fontName='Helvetica', textColor=colors.HexColor('#444'), alignment=TA_CENTER, spaceAfter=2)
-    bold9 = ParagraphStyle('b', fontSize=9,  fontName='Helvetica-Bold', textColor=colors.black)
-    norm8 = ParagraphStyle('n', fontSize=8,  fontName='Helvetica', textColor=colors.HexColor('#333'), leading=12, alignment=TA_JUSTIFY)
-    label = ParagraphStyle('l', fontSize=7.5,fontName='Helvetica-Bold', textColor=colors.HexColor('#555'))
+    sous  = ParagraphStyle('s', fontSize=9, fontName='Helvetica', textColor=colors.HexColor('#444'), alignment=TA_CENTER, spaceAfter=2)
+    bold9 = ParagraphStyle('b', fontSize=9, fontName='Helvetica-Bold', textColor=colors.black)
+    norm8 = ParagraphStyle('n', fontSize=8, fontName='Helvetica', textColor=colors.HexColor('#333'), leading=12, alignment=TA_JUSTIFY)
+    label = ParagraphStyle('l', fontSize=7.5, fontName='Helvetica-Bold', textColor=colors.HexColor('#555'))
 
     story.append(Paragraph(LYCEE['nom'], titre))
     story.append(Paragraph(f"{LYCEE['adresse']} — Tél : {LYCEE['tel']}", sous))
     story.append(HRFlowable(width="100%", thickness=2, color=bleu, spaceAfter=10))
-    story.append(Paragraph("CONVENTION DE MINI-STAGE — SÉQUENCE D'OBSERVATION", ParagraphStyle('cv', fontSize=12, fontName='Helvetica-Bold', alignment=TA_CENTER, textColor=bleu, spaceAfter=12)))
+    story.append(Paragraph("CONVENTION DE MINI-STAGE — SÉQUENCE D'OBSERVATION",
+                            ParagraphStyle('cv', fontSize=12, fontName='Helvetica-Bold', alignment=TA_CENTER, textColor=bleu, spaceAfter=12)))
 
     cr = resa.creneau
-    f  = cr.formation
+    f = cr.formation
     nom_formation = f"{f['niveau']} {f['nom']}" if f else cr.formation_id
 
-    brd = {'style': 'GRID', 'color': colors.HexColor('#c0d8f0')}
-
-    # Infos stage
     t_stage = Table([
         [Paragraph('Formation', label), Paragraph(nom_formation, bold9)],
-        [Paragraph('Date', label),      Paragraph(cr.date.strftime('%A %d %B %Y').capitalize(), bold9)],
-        [Paragraph('Horaires', label),  Paragraph(f"{cr.heure_debut} – {cr.heure_fin}", bold9)],
-        [Paragraph('Salle', label),     Paragraph(cr.salle or '—', bold9)],
-        [Paragraph('Professeur', label),Paragraph(cr.professeur or '—', bold9)],
+        [Paragraph('Date', label), Paragraph(cr.date.strftime('%A %d %B %Y').capitalize(), bold9)],
+        [Paragraph('Horaires', label), Paragraph(f"{cr.heure_debut} – {cr.heure_fin}", bold9)],
+        [Paragraph('Salle', label), Paragraph(cr.salle or '—', bold9)],
+        [Paragraph('Professeur', label), Paragraph(cr.professeur or '—', bold9)],
         [Paragraph('Code réservation', label), Paragraph(resa.code, bold9)],
     ], colWidths=[4*cm, 13*cm])
     t_stage.setStyle(TableStyle([
         ('BACKGROUND',(0,0),(0,-1),colors.HexColor('#e3f0fb')),
         ('GRID',(0,0),(-1,-1),0.5,colors.HexColor('#c0d8f0')),
         ('ROWBACKGROUNDS',(0,0),(-1,-1),[colors.HexColor('#f0f7ff'),colors.white]),
-        ('PADDING',(0,0),(-1,-1),5),('VALIGN',(0,0),(-1,-1),'MIDDLE'),
+        ('PADDING',(0,0),(-1,-1),5),
+        ('VALIGN',(0,0),(-1,-1),'MIDDLE'),
     ]))
     story.append(t_stage)
     story.append(Spacer(1, 0.4*cm))
 
-    # 3 colonnes : élève | étab origine | étab accueil
     col_eleve = [
         Paragraph('<b>L\'ÉLÈVE</b>', ParagraphStyle('h', fontSize=8.5, fontName='Helvetica-Bold', textColor=bleu)),
         Spacer(1,4),
@@ -264,9 +262,9 @@ def generer_convention_pdf(resa):
     story.append(t3col)
     story.append(Spacer(1, 0.4*cm))
 
-    # Dispositions générales
     story.append(HRFlowable(width="100%", thickness=1, color=colors.HexColor('#c0d8f0'), spaceAfter=8))
-    story.append(Paragraph("DISPOSITIONS GÉNÉRALES", ParagraphStyle('dg', fontSize=9, fontName='Helvetica-Bold', textColor=bleu, spaceAfter=6)))
+    story.append(Paragraph("DISPOSITIONS GÉNÉRALES",
+                            ParagraphStyle('dg', fontSize=9, fontName='Helvetica-Bold', textColor=bleu, spaceAfter=6)))
     dispos = [
         "La présente convention a pour objet de définir les modalités d'un mini-stage entre l'élève et son représentant légal, l'établissement d'origine et l'établissement d'accueil.",
         "Le trajet aller-retour de l'élève, entre son établissement d'origine ou son domicile et le lycée d'accueil, se fait sous la responsabilité et à la charge de sa famille.",
@@ -277,16 +275,18 @@ def generer_convention_pdf(resa):
         story.append(Paragraph(f"• {d}", norm8))
     story.append(Spacer(1, 0.5*cm))
 
-    # Signatures
-    story.append(Paragraph("SIGNATURES", ParagraphStyle('sig', fontSize=9, fontName='Helvetica-Bold', textColor=bleu, spaceAfter=8)))
+    story.append(Paragraph("SIGNATURES",
+                            ParagraphStyle('sig', fontSize=9, fontName='Helvetica-Bold', textColor=bleu, spaceAfter=8)))
     sig = Table([
-        ['Responsable légal de l\'élève\n(signature)', 'Chef d\'établissement d\'origine\n(cachet + signature)', f'Établissement d\'accueil\n(cachet + signature)'],
+        ['Responsable légal de l\'élève\n(signature)', 'Chef d\'établissement d\'origine\n(cachet + signature)', 'Établissement d\'accueil\n(cachet + signature)'],
         ['\n\n\n\n', '\n\n\n\n', '\n\n\n\n'],
         ['Date : ___________', 'Date : ___________', 'Date : ___________'],
     ], colWidths=[5.7*cm, 5.7*cm, 5.7*cm])
     sig.setStyle(TableStyle([
-        ('FONTNAME',(0,0),(-1,0),'Helvetica-Bold'),('FONTSIZE',(0,0),(-1,-1),8),
-        ('ALIGN',(0,0),(-1,-1),'CENTER'),('VALIGN',(0,0),(-1,-1),'TOP'),
+        ('FONTNAME',(0,0),(-1,0),'Helvetica-Bold'),
+        ('FONTSIZE',(0,0),(-1,-1),8),
+        ('ALIGN',(0,0),(-1,-1),'CENTER'),
+        ('VALIGN',(0,0),(-1,-1),'TOP'),
         ('BOX',(0,0),(0,-1),0.5,colors.HexColor('#c0d8f0')),
         ('BOX',(1,0),(1,-1),0.5,colors.HexColor('#c0d8f0')),
         ('BOX',(2,0),(2,-1),0.5,colors.HexColor('#c0d8f0')),
@@ -334,6 +334,7 @@ def demander_mdp():
             <span style="font-size:30px;font-weight:bold;letter-spacing:8px;color:#1565c0;">{code}</span>
           </div>
           <p>Rendez-vous sur le site et saisissez ce code pour effectuer votre réservation.</p>
+          <p><strong>Conservez ce mot de passe</strong> — il reste valable, inutile d'en redemander un nouveau à chaque fois.</p>
           <p style="color:#888;font-size:12px;">{LYCEE['nom']} — {LYCEE['adresse']}</p>
         </div>
         """
@@ -453,30 +454,31 @@ def liste_attente():
         </div>
         """
         envoyer_mail(mdp.email, f"Liste d'attente — {nom_f}", html)
-        flash("Vous avez été ajouté(e) à la liste d'attente. Vous serez notifié(e) par mail si une place se libère.", "success")
+        flash("Vous avez été ajouté(e) à la liste d'attente.", "success")
     return redirect(url_for('reservation'))
 
 @app.route('/confirmer-attente/<token>')
 def confirmer_attente(token):
     att = ListeAttente.query.filter_by(token=token, confirme=False).first_or_404()
     if att.date_notif and datetime.now() - att.date_notif > timedelta(hours=24):
-        flash("Ce lien a expiré (24h). Vous avez été retiré de la liste.", "error")
+        flash("Ce lien a expiré (24h).", "error")
         db.session.delete(att)
         db.session.commit()
         notifier_suivant_attente(att.creneau_id)
         return redirect(url_for('index'))
-    session['pwd_valide'] = MotDePasse.query.filter_by(email=att.etab_email).first().code if MotDePasse.query.filter_by(email=att.etab_email).first() else None
     session['etab_email'] = att.etab_email
+    mdp = MotDePasse.query.filter_by(email=att.etab_email).first()
+    if mdp:
+        session['pwd_valide'] = mdp.code
     att.confirme = True
     db.session.commit()
     flash("Place confirmée ! Complétez votre réservation.", "success")
-    cr = Creneau.query.get(att.creneau_id)
-    return redirect(url_for('reservation') + f"?creneau_preselect={att.creneau_id}")
-    
+    return redirect(url_for('reservation'))
+
 @app.route('/rgpd')
 def rgpd():
     return render_template('rgpd.html')
-    
+
 @app.route('/gerer', methods=['GET','POST'])
 def gerer():
     resa = None
@@ -524,7 +526,7 @@ def modifier(code):
     """
     pdf = generer_convention_pdf(resa)
     envoyer_mail(resa.etab_email, f"Modification réservation {code}", html, [(f"convention_{code}.pdf", pdf)])
-    flash("Réservation modifiée avec succès. Une nouvelle convention vous a été envoyée.", "success")
+    flash("Réservation modifiée. Une nouvelle convention vous a été envoyée.", "success")
     return redirect(url_for('gerer'))
 
 @app.route('/annuler/<code>', methods=['POST'])
@@ -610,15 +612,6 @@ def admin_logout():
 def init_db():
     with app.app_context():
         db.create_all()
-        if Creneau.query.count() == 0:
-            for cr in [
-                Creneau(formation_id='bp-ecp',     date=date(2025,3,23), heure_debut='08:00', heure_fin='10:00', salle='A002', professeur='Mme KRAISIN', places_max=2),
-                Creneau(formation_id='bp-ecp',     date=date(2025,3,23), heure_debut='10:00', heure_fin='12:00', salle='A002', professeur='Mme KRAISIN', places_max=2),
-                Creneau(formation_id='bp-coiffure',date=date(2025,3,26), heure_debut='08:00', heure_fin='12:00', salle='C200', professeur='Mme MORGADO', places_max=4),
-                Creneau(formation_id='bp-coiffure',date=date(2025,4,2),  heure_debut='08:00', heure_fin='12:00', salle='C200', professeur='Mme MORGADO', places_max=4),
-            ]:
-                db.session.add(cr)
-            db.session.commit()
 
 init_db()
 
