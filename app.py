@@ -332,7 +332,8 @@ def demander_mdp():
             <span style="font-size:30px;font-weight:bold;letter-spacing:8px;color:#1565c0;">{code}</span>
           </div>
           <p>Rendez-vous sur le site et saisissez ce code pour effectuer votre réservation.</p>
-          <p><strong>Conservez ce mot de passe</strong> — il reste valable, inutile d'en redemander un nouveau à chaque fois.</p>
+         <p><strong>Conservez ce mot de passe</strong> — il reste valable, inutile d'en redemander un nouveau à chaque fois.</p>
+          <p style="color:#888;font-size:12px;">⚠️ Ceci est un mail automatique, merci de ne pas y répondre. Pour nous contacter : <a href="mailto:ministagesfernandleger@gmail.com" style="color:#1565c0;">ministagesfernandleger@gmail.com</a></p>
           <p style="color:#888;font-size:12px;">{LYCEE['nom']} — {LYCEE['adresse']}</p>
         </div>
         """
