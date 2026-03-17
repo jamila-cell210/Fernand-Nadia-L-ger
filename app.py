@@ -120,25 +120,21 @@ def email_ok(email):
 
 def envoyer_mail(dest, sujet, html, pieces=None):
     try:
-        msg = MIMEMultipart('mixed')
-        msg['From'] = MAIL_FROM
-        msg['To'] = dest
-        msg['Subject'] = sujet
-        msg.attach(MIMEText(html, 'html', 'utf-8'))
+        payload = {
+            "sender": {"name": "Mini-Stages Lycée Fernand et Nadia Léger", "email": MAIL_FROM},
+            "to": [{"email": dest}],
+            "subject": sujet,
+            "htmlContent": html,
+        }
         if pieces:
-            for nom, data in pieces:
-                part = MIMEBase('application', 'octet-stream')
-                part.set_payload(data)
-                encoders.encode_base64(part)
-                part.add_header('Content-Disposition', f'attachment; filename="{nom}"')
-                msg.attach(part)
-        with smtplib.SMTP('smtp.gmail.com', 587, timeout=30) as server:
-            server.ehlo()
-            server.starttls()
-            server.ehlo()
-            server.login(MAIL_FROM, MAIL_PASS)
-            server.send_message(msg)
-        return True
+            payload["attachment"] = [{"name": n, "content": __import__('base64').b64encode(d).decode()} for n, d in pieces]
+        r = requests.post(
+            "https://api.brevo.com/v3/smtp/email",
+            headers={"api-key": os.environ.get('BREVO_API_KEY', ''), "Content-Type": "application/json"},
+            json=payload, timeout=15
+        )
+        print(f"Mail envoyé: {r.status_code}")
+        return r.status_code in (200, 201)
     except Exception as e:
         print(f"Erreur mail: {e}")
         return False
