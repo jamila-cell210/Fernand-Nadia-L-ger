@@ -98,10 +98,10 @@
             </div>
             {% if cr.complet %}
               <span class="pbadge p-full">Complet</span>
-              <form method="POST" action="/liste-attente" style="display:block;margin-top:.5rem">
-                <input type="hidden" name="creneau_id" value="{{cr.id}}">
-                <button type="submit" class="attente-btn" onclick="event.stopPropagation()">📋 M'inscrire en liste d'attente</button>
-              </form>
+              <form method="POST" action="/liste-attente" style="display:block;margin-top:.5rem" onsubmit="event.stopPropagation()">
+  <input type="hidden" name="creneau_id" value="{{cr.id}}">
+  <button type="submit" class="attente-btn" onclick="event.stopPropagation();this.form.submit();return false;">📋 M'inscrire en liste d'attente</button>
+</form>
             {% elif cr.places_restantes == 1 %}
               <span class="pbadge p-warn">Dernière place !</span>
             {% else %}
