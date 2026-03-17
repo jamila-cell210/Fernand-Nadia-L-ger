@@ -615,7 +615,21 @@ def admin_logout():
 def init_db():
     with app.app_context():
         db.create_all()
-
+        if Creneau.query.count() == 0:
+            creneaux = [
+                Creneau(formation_id='bp-ecp', date=date(2026,3,23), heure_debut='08:00', heure_fin='10:00', salle='A002', professeur='Mme KRAISIN', places_max=2),
+                Creneau(formation_id='bp-ecp', date=date(2026,3,23), heure_debut='10:00', heure_fin='12:00', salle='A002', professeur='Mme KRAISIN', places_max=2),
+                Creneau(formation_id='bp-ecp', date=date(2026,3,23), heure_debut='08:00', heure_fin='10:00', salle='A003', professeur='Mme CRETEUR', places_max=2),
+                Creneau(formation_id='bp-ecp', date=date(2026,3,23), heure_debut='10:00', heure_fin='12:00', salle='A003', professeur='Mme CRETEUR', places_max=2),
+                Creneau(formation_id='bp-ecp', date=date(2026,3,30), heure_debut='08:00', heure_fin='12:00', salle='A003', professeur='Mme CRETEUR', places_max=2),
+                Creneau(formation_id='bp-ecp', date=date(2026,3,30), heure_debut='08:00', heure_fin='10:00', salle='A002', professeur='Mme KRAISIN', places_max=2),
+                Creneau(formation_id='bp-ecp', date=date(2026,3,30), heure_debut='10:00', heure_fin='12:00', salle='A002', professeur='Mme KRAISIN', places_max=2),
+                Creneau(formation_id='bp-ecp', date=date(2026,3,24), heure_debut='14:00', heure_fin='16:00', salle='A003', professeur='Mme LEFEVRE', places_max=2),
+                Creneau(formation_id='bp-ecp', date=date(2026,3,24), heure_debut='16:00', heure_fin='18:00', salle='A003', professeur='Mme LEFEVRE', places_max=2),
+            ]
+            for cr in creneaux:
+                db.session.add(cr)
+            db.session.commit()
 init_db()
 
 if __name__ == '__main__':
