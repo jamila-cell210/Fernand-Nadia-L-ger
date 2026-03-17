@@ -415,7 +415,7 @@ def reservation():
         envoyer_mail(resa.etab_email, f"Confirmation mini-stage — {nom_f} le {cr.date.strftime('%d/%m/%Y')}", html, [(f"convention_{code}.pdf", pdf)])
         return redirect(url_for('confirmation', code=code))
 
-    return render_template('reservation.html', formations=FORMATIONS, par_formation=par_formation, etab_email=session.get('etab_email'))
+   return render_template('reservation.html', formations=FORMATIONS, par_formation=par_formation, etab_email=session.get('etab_email'), date_fr=date_fr)
 
 @app.route('/confirmation/<code>')
 def confirmation(code):
