@@ -105,7 +105,7 @@
           {% for cr in par_formation[f.id] %}
           <label class="cren-card {{'full' if cr.complet}}" onclick="{{'selectCreneau(this,'+cr.id|string+')' if not cr.complet}}">
             <input type="radio" name="cren_radio" value="{{cr.id}}" {{'disabled' if cr.complet}}>
-            <div class="cren-date">📅 {{cr.date.strftime('%A %d %B %Y')|capitalize}}</div>
+            <div class="cren-date">📅 {{date_fr(cr.date)}}</div>
             <div class="cren-time">⏱ {{cr.heure_debut}} – {{cr.heure_fin}}</div>
             <div class="cren-meta">
               {% if cr.salle %}<span>🚪 Salle {{cr.salle}}</span>{% endif %}
