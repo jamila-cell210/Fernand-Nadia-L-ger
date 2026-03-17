@@ -1,16 +1,7 @@
-from flask import Flask, render_template, request, redirect, url_for, session, flash, send_file, jsonify
+from flask import Flask, render_template, request, redirect, url_for, session, flash, send_file
 from flask_sqlalchemy import SQLAlchemy
 from datetime import datetime, date, timedelta
-import random, string, os, io, requests, smtplib
-JOURS = ['Lundi','Mardi','Mercredi','Jeudi','Vendredi','Samedi','Dimanche']
-MOIS = ['janvier','février','mars','avril','mai','juin','juillet','août','septembre','octobre','novembre','décembre']
-
-def date_fr(d):
-    return f"{JOURS[d.weekday()]} {d.day} {MOIS[d.month-1]} {d.year}"
-from email.mime.multipart import MIMEMultipart
-from email.mime.text import MIMEText
-from email.mime.base import MIMEBase
-from email import encoders
+import random, string, os, io, requests
 from functools import wraps
 from reportlab.lib.pagesizes import A4
 from reportlab.lib import colors
@@ -24,11 +15,9 @@ app.secret_key = os.environ.get('SECRET_KEY', 'ministages2025secret')
 app.config['SQLALCHEMY_DATABASE_URI'] = os.environ.get('DATABASE_URL', 'sqlite:///ministages.db').replace('postgres://', 'postgresql://')
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 
-# ── CONFIG ──────────────────────────────────────────────────
 MAIL_FROM = os.environ.get('MAIL_FROM', 'ministagesfernandleger@gmail.com')
 MAIL_PASS = os.environ.get('MAIL_PASS', '')
 ADMIN_PASS = os.environ.get('ADMIN_PASS', 'admin2025')
-
 ACADEMIES = ['ac-versailles.fr', 'ac-creteil.fr', 'ac-paris.fr']
 
 LYCEE = {
@@ -49,9 +38,14 @@ FORMATIONS = [
     {'id': 'bt-st2s', 'niveau': 'BAC TECHNO', 'nom': 'Sciences et Technologies de la Santé et du Social', 'emoji': '🔬', 'niveaux_eleves': ['3ème','2nde'], 'onisep': 'https://www.onisep.fr/ressources/univers-formation/formations/lycees/bac-techno-st2s-sciences-et-technologies-de-la-sante-et-du-social'},
 ]
 
+JOURS = ['Lundi', 'Mardi', 'Mercredi', 'Jeudi', 'Vendredi', 'Samedi', 'Dimanche']
+MOIS = ['janvier', 'février', 'mars', 'avril', 'mai', 'juin', 'juillet', 'août', 'septembre', 'octobre', 'novembre', 'décembre']
+
+def date_fr(d):
+    return f"{JOURS[d.weekday()]} {d.day} {MOIS[d.month-1]} {d.year}"
+
 db = SQLAlchemy(app)
 
-# ── MODÈLES ─────────────────────────────────────────────────
 class Creneau(db.Model):
     id           = db.Column(db.Integer, primary_key=True)
     formation_id = db.Column(db.String(50), nullable=False)
@@ -116,7 +110,6 @@ class MotDePasse(db.Model):
     code       = db.Column(db.String(10), nullable=False)
     date_envoi = db.Column(db.DateTime, default=datetime.now)
 
-# ── HELPERS ─────────────────────────────────────────────────
 def gen_code(n=8):
     return ''.join(random.choices(string.ascii_uppercase + string.digits, k=n))
 
@@ -138,74 +131,53 @@ def envoyer_mail(dest, sujet, html, pieces=None):
             headers={"api-key": os.environ.get('BREVO_API_KEY', ''), "Content-Type": "application/json"},
             json=payload, timeout=15
         )
-        print(f"Mail envoyé: {r.status_code}")
+        print(f"Mail: {r.status_code} {r.text}")
         return r.status_code in (200, 201)
     except Exception as e:
         print(f"Erreur mail: {e}")
         return False
 
-def get_formation(fid):
-    return next((f for f in FORMATIONS if f['id'] == fid), None)
-
 def notifier_suivant_attente(creneau_id):
     cr = Creneau.query.get(creneau_id)
     if not cr or cr.complet:
         return
-    suivant = ListeAttente.query.filter_by(
-        creneau_id=creneau_id, notifie=False, confirme=False
-    ).order_by(ListeAttente.date_ajout).first()
+    suivant = ListeAttente.query.filter_by(creneau_id=creneau_id, notifie=False, confirme=False).order_by(ListeAttente.date_ajout).first()
     if not suivant:
         return
     f = cr.formation
     nom_formation = f"{f['niveau']} {f['nom']}" if f else "Formation"
     lien = url_for('confirmer_attente', token=suivant.token, _external=True)
-    html = f"""
-    <div style="font-family:Arial,sans-serif;max-width:560px;margin:0 auto;padding:30px;background:#f0f7ff;border-radius:12px;">
-      <h2 style="color:#1565c0;">🎉 Une place s'est libérée !</h2>
-      <p>Une place vient de se libérer sur le créneau suivant :</p>
-      <div style="background:#fff;border:2px solid #1565c0;border-radius:8px;padding:16px;margin:16px 0;">
-        <b>Formation :</b> {nom_formation}<br>
-        <b>Date :</b> {cr.date.strftime('%d/%m/%Y')}<br>
-        <b>Horaires :</b> {cr.heure_debut} – {cr.heure_fin}<br>
-        <b>Salle :</b> {cr.salle or '—'}
-      </div>
-      <p>Vous avez <strong>24 heures</strong> pour confirmer votre place :</p>
+    html = f"""<div style="font-family:Arial,sans-serif;max-width:560px;margin:0 auto;padding:30px;background:#f0f7ff;border-radius:12px;">
+      <h2 style="color:#1565c0;">Une place s'est libérée !</h2>
+      <p>Une place vient de se libérer pour : <b>{nom_formation}</b> le {date_fr(cr.date)} de {cr.heure_debut} à {cr.heure_fin}</p>
+      <p>Vous avez <strong>24 heures</strong> pour confirmer :</p>
       <a href="{lien}" style="display:inline-block;background:#1565c0;color:#fff;padding:12px 24px;border-radius:8px;text-decoration:none;font-weight:bold;">Confirmer ma place →</a>
-      <p style="color:#888;font-size:12px;margin-top:20px;">Sans confirmation dans les 24h, la place sera proposée au suivant.</p>
-    </div>
-    """
-    if envoyer_mail(suivant.etab_email, f"Place disponible — {nom_formation} le {cr.date.strftime('%d/%m/%Y')}", html):
+    </div>"""
+    if envoyer_mail(suivant.etab_email, f"Place disponible — {nom_formation}", html):
         suivant.notifie = True
         suivant.date_notif = datetime.now()
         db.session.commit()
 
 def generer_convention_pdf(resa):
     buffer = io.BytesIO()
-    doc = SimpleDocTemplate(buffer, pagesize=A4,
-                            rightMargin=1.8*cm, leftMargin=1.8*cm,
-                            topMargin=1.5*cm, bottomMargin=1.5*cm)
+    doc = SimpleDocTemplate(buffer, pagesize=A4, rightMargin=1.8*cm, leftMargin=1.8*cm, topMargin=1.5*cm, bottomMargin=1.5*cm)
     bleu = colors.HexColor('#1565c0')
     story = []
-
     titre = ParagraphStyle('t', fontSize=15, fontName='Helvetica-Bold', textColor=bleu, alignment=TA_CENTER, spaceAfter=4)
     sous  = ParagraphStyle('s', fontSize=9, fontName='Helvetica', textColor=colors.HexColor('#444'), alignment=TA_CENTER, spaceAfter=2)
     bold9 = ParagraphStyle('b', fontSize=9, fontName='Helvetica-Bold', textColor=colors.black)
     norm8 = ParagraphStyle('n', fontSize=8, fontName='Helvetica', textColor=colors.HexColor('#333'), leading=12, alignment=TA_JUSTIFY)
     label = ParagraphStyle('l', fontSize=7.5, fontName='Helvetica-Bold', textColor=colors.HexColor('#555'))
-
     story.append(Paragraph(LYCEE['nom'], titre))
     story.append(Paragraph(f"{LYCEE['adresse']} — Tél : {LYCEE['tel']}", sous))
     story.append(HRFlowable(width="100%", thickness=2, color=bleu, spaceAfter=10))
-    story.append(Paragraph("CONVENTION DE MINI-STAGE — SÉQUENCE D'OBSERVATION",
-                            ParagraphStyle('cv', fontSize=12, fontName='Helvetica-Bold', alignment=TA_CENTER, textColor=bleu, spaceAfter=12)))
-
+    story.append(Paragraph("CONVENTION DE MINI-STAGE — SÉQUENCE D'OBSERVATION", ParagraphStyle('cv', fontSize=12, fontName='Helvetica-Bold', alignment=TA_CENTER, textColor=bleu, spaceAfter=12)))
     cr = resa.creneau
     f = cr.formation
     nom_formation = f"{f['niveau']} {f['nom']}" if f else cr.formation_id
-
     t_stage = Table([
         [Paragraph('Formation', label), Paragraph(nom_formation, bold9)],
-        [Paragraph('Date', label), Paragraph(cr.date.strftime('%A %d %B %Y').capitalize(), bold9)],
+        [Paragraph('Date', label), Paragraph(date_fr(cr.date), bold9)],
         [Paragraph('Horaires', label), Paragraph(f"{cr.heure_debut} – {cr.heure_fin}", bold9)],
         [Paragraph('Salle', label), Paragraph(cr.salle or '—', bold9)],
         [Paragraph('Professeur', label), Paragraph(cr.professeur or '—', bold9)],
@@ -220,7 +192,6 @@ def generer_convention_pdf(resa):
     ]))
     story.append(t_stage)
     story.append(Spacer(1, 0.4*cm))
-
     col_eleve = [
         Paragraph('<b>L\'ÉLÈVE</b>', ParagraphStyle('h', fontSize=8.5, fontName='Helvetica-Bold', textColor=bleu)),
         Spacer(1,4),
@@ -250,7 +221,6 @@ def generer_convention_pdf(resa):
         Paragraph(f"Adresse : {LYCEE['adresse']}", norm8),
         Paragraph(f"Tél : {LYCEE['tel']}", norm8),
     ]
-
     t3col = Table([[col_eleve, col_origine, col_accueil]], colWidths=[5.7*cm, 5.7*cm, 5.7*cm])
     t3col.setStyle(TableStyle([
         ('BOX',(0,0),(0,0),0.5,colors.HexColor('#c0d8f0')),
@@ -264,32 +234,25 @@ def generer_convention_pdf(resa):
     ]))
     story.append(t3col)
     story.append(Spacer(1, 0.4*cm))
-
     story.append(HRFlowable(width="100%", thickness=1, color=colors.HexColor('#c0d8f0'), spaceAfter=8))
-    story.append(Paragraph("DISPOSITIONS GÉNÉRALES",
-                            ParagraphStyle('dg', fontSize=9, fontName='Helvetica-Bold', textColor=bleu, spaceAfter=6)))
-    dispos = [
+    story.append(Paragraph("DISPOSITIONS GÉNÉRALES", ParagraphStyle('dg', fontSize=9, fontName='Helvetica-Bold', textColor=bleu, spaceAfter=6)))
+    for d in [
         "La présente convention a pour objet de définir les modalités d'un mini-stage entre l'élève et son représentant légal, l'établissement d'origine et l'établissement d'accueil.",
         "Le trajet aller-retour de l'élève, entre son établissement d'origine ou son domicile et le lycée d'accueil, se fait sous la responsabilité et à la charge de sa famille.",
         "Durant le mini-stage, l'élève est associé aux activités proposées par l'établissement d'accueil. Il est soumis au règlement intérieur du lycée d'accueil.",
         "L'élève devra se présenter à l'accueil 10 minutes avant le début de la séquence muni de cette convention dûment complétée et signée.",
-    ]
-    for d in dispos:
+    ]:
         story.append(Paragraph(f"• {d}", norm8))
     story.append(Spacer(1, 0.5*cm))
-
-    story.append(Paragraph("SIGNATURES",
-                            ParagraphStyle('sig', fontSize=9, fontName='Helvetica-Bold', textColor=bleu, spaceAfter=8)))
+    story.append(Paragraph("SIGNATURES", ParagraphStyle('sig', fontSize=9, fontName='Helvetica-Bold', textColor=bleu, spaceAfter=8)))
     sig = Table([
         ['Responsable légal de l\'élève\n(signature)', 'Chef d\'établissement d\'origine\n(cachet + signature)', 'Établissement d\'accueil\n(cachet + signature)'],
         ['\n\n\n\n', '\n\n\n\n', '\n\n\n\n'],
         ['Date : ___________', 'Date : ___________', 'Date : ___________'],
     ], colWidths=[5.7*cm, 5.7*cm, 5.7*cm])
     sig.setStyle(TableStyle([
-        ('FONTNAME',(0,0),(-1,0),'Helvetica-Bold'),
-        ('FONTSIZE',(0,0),(-1,-1),8),
-        ('ALIGN',(0,0),(-1,-1),'CENTER'),
-        ('VALIGN',(0,0),(-1,-1),'TOP'),
+        ('FONTNAME',(0,0),(-1,0),'Helvetica-Bold'),('FONTSIZE',(0,0),(-1,-1),8),
+        ('ALIGN',(0,0),(-1,-1),'CENTER'),('VALIGN',(0,0),(-1,-1),'TOP'),
         ('BOX',(0,0),(0,-1),0.5,colors.HexColor('#c0d8f0')),
         ('BOX',(1,0),(1,-1),0.5,colors.HexColor('#c0d8f0')),
         ('BOX',(2,0),(2,-1),0.5,colors.HexColor('#c0d8f0')),
@@ -309,8 +272,6 @@ def admin_required(f):
         return f(*args, **kwargs)
     return decorated
 
-# ── ROUTES ──────────────────────────────────────────────────
-
 @app.route('/')
 def index():
     return render_template('index.html', formations=FORMATIONS)
@@ -329,19 +290,17 @@ def demander_mdp():
         else:
             db.session.add(MotDePasse(email=email, code=code))
         db.session.commit()
-        html = f"""
-        <div style="font-family:Arial,sans-serif;max-width:500px;margin:0 auto;padding:30px;background:#f0f7ff;border-radius:12px;">
+        html = f"""<div style="font-family:Arial,sans-serif;max-width:500px;margin:0 auto;padding:30px;background:#f0f7ff;border-radius:12px;">
           <h2 style="color:#1565c0;">🎓 Mini-Stages — {LYCEE['nom']}</h2>
           <p>Voici votre mot de passe pour accéder aux réservations :</p>
           <div style="background:#fff;border:2px solid #1565c0;border-radius:8px;padding:20px;text-align:center;margin:20px 0;">
             <span style="font-size:30px;font-weight:bold;letter-spacing:8px;color:#1565c0;">{code}</span>
           </div>
           <p>Rendez-vous sur le site et saisissez ce code pour effectuer votre réservation.</p>
-         <p><strong>Conservez ce mot de passe</strong> — il reste valable, inutile d'en redemander un nouveau à chaque fois.</p>
+          <p><strong>Conservez ce mot de passe</strong> — il reste valable, inutile d'en redemander un nouveau à chaque fois.</p>
           <p style="color:#888;font-size:12px;">⚠️ Ceci est un mail automatique, merci de ne pas y répondre. Pour nous contacter : <a href="mailto:ministagesfernandleger@gmail.com" style="color:#1565c0;">ministagesfernandleger@gmail.com</a></p>
           <p style="color:#888;font-size:12px;">{LYCEE['nom']} — {LYCEE['adresse']}</p>
-        </div>
-        """
+        </div>"""
         envoyer_mail(email, f"Votre mot de passe — Mini-Stages {LYCEE['nom']}", html)
         return render_template('demander_mdp.html', succes=True, email=email)
     return render_template('demander_mdp.html')
@@ -355,14 +314,12 @@ def reservation():
         return redirect(url_for('index'))
     session['pwd_valide'] = pwd
     session['etab_email'] = mdp.email
-
     creneaux = Creneau.query.filter_by(actif=True).filter(Creneau.date >= date.today()).order_by(Creneau.date, Creneau.heure_debut).all()
     par_formation = {}
     for cr in creneaux:
         if cr.formation_id not in par_formation:
             par_formation[cr.formation_id] = []
         par_formation[cr.formation_id].append(cr)
-
     if request.method == 'POST':
         creneau_id = request.form.get('creneau_id')
         cr = Creneau.query.get(creneau_id)
@@ -392,30 +349,25 @@ def reservation():
         pdf = generer_convention_pdf(resa)
         f = cr.formation
         nom_f = f"{f['niveau']} {f['nom']}" if f else cr.formation_id
-        html = f"""
-        <div style="font-family:Arial,sans-serif;max-width:600px;margin:0 auto;padding:30px;background:#f0f7ff;border-radius:12px;">
+        html = f"""<div style="font-family:Arial,sans-serif;max-width:600px;margin:0 auto;padding:30px;background:#f0f7ff;border-radius:12px;">
           <h2 style="color:#1565c0;">✅ Réservation confirmée</h2>
-          <p>Bonjour,<br>La réservation suivante a bien été enregistrée :</p>
+          <p>La réservation suivante a bien été enregistrée :</p>
           <table style="width:100%;border-collapse:collapse;margin:16px 0;">
             <tr><td style="padding:7px;background:#e3f0fb;font-weight:bold;width:40%;">Formation</td><td style="padding:7px;">{nom_f}</td></tr>
-            <tr><td style="padding:7px;background:#e3f0fb;font-weight:bold;">Date</td><td style="padding:7px;">{cr.date.strftime('%d/%m/%Y')}</td></tr>
+            <tr><td style="padding:7px;background:#e3f0fb;font-weight:bold;">Date</td><td style="padding:7px;">{date_fr(cr.date)}</td></tr>
             <tr><td style="padding:7px;background:#e3f0fb;font-weight:bold;">Horaires</td><td style="padding:7px;">{cr.heure_debut} – {cr.heure_fin}</td></tr>
             <tr><td style="padding:7px;background:#e3f0fb;font-weight:bold;">Élève</td><td style="padding:7px;">{resa.eleve_prenom} {resa.eleve_nom}</td></tr>
             <tr><td style="padding:7px;background:#e3f0fb;font-weight:bold;">Code réservation</td><td style="padding:7px;font-weight:bold;color:#1565c0;">{code}</td></tr>
           </table>
           <div style="background:#fff8ee;border:1px solid #fde8b0;border-radius:8px;padding:14px;margin:14px 0;">
-            <b>⚠️ Important :</b> La convention ci-jointe doit être signée par :<br>
-            • Le(s) responsable(s) légal(aux) de l'élève<br>
-            • Le chef de votre établissement<br><br>
-            <b>L'élève doit impérativement se présenter avec la convention signée.</b>
+            <b>⚠️ Important :</b> La convention ci-jointe doit être signée par le(s) responsable(s) légal(aux) et le chef d'établissement avant le jour du stage.
           </div>
+          <p style="color:#888;font-size:12px;">⚠️ Ceci est un mail automatique, merci de ne pas y répondre. Pour nous contacter : ministagesfernandleger@gmail.com</p>
           <p style="color:#555;font-size:12px;">{LYCEE['nom']} — {LYCEE['adresse']}</p>
-        </div>
-        """
-        envoyer_mail(resa.etab_email, f"Confirmation mini-stage — {nom_f} le {cr.date.strftime('%d/%m/%Y')}", html, [(f"convention_{code}.pdf", pdf)])
+        </div>"""
+        envoyer_mail(resa.etab_email, f"Confirmation mini-stage — {nom_f} le {date_fr(cr.date)}", html, [(f"convention_{code}.pdf", pdf)])
         return redirect(url_for('confirmation', code=code))
-
-  return render_template('reservation.html', formations=FORMATIONS, par_formation=par_formation, etab_email=session.get('etab_email'), date_fr=date_fr)
+    return render_template('reservation.html', formations=FORMATIONS, par_formation=par_formation, etab_email=session.get('etab_email'), date_fr=date_fr)
 
 @app.route('/confirmation/<code>')
 def confirmation(code):
@@ -446,17 +398,11 @@ def liste_attente():
         db.session.commit()
         f = cr.formation
         nom_f = f"{f['niveau']} {f['nom']}" if f else cr.formation_id
-        html = f"""
-        <div style="font-family:Arial,sans-serif;max-width:500px;margin:0 auto;padding:30px;background:#f0f7ff;border-radius:12px;">
+        html = f"""<div style="font-family:Arial,sans-serif;max-width:500px;margin:0 auto;padding:30px;background:#f0f7ff;border-radius:12px;">
           <h2 style="color:#1565c0;">📋 Inscription liste d'attente</h2>
-          <p>Vous êtes inscrit(e) sur la liste d'attente pour :</p>
-          <div style="background:#fff;border:2px solid #1565c0;border-radius:8px;padding:14px;margin:14px 0;">
-            <b>{nom_f}</b><br>
-            {cr.date.strftime('%d/%m/%Y')} — {cr.heure_debut} à {cr.heure_fin}
-          </div>
+          <p>Vous êtes inscrit(e) sur la liste d'attente pour <b>{nom_f}</b> le {date_fr(cr.date)} de {cr.heure_debut} à {cr.heure_fin}.</p>
           <p>Vous serez notifié(e) par mail dès qu'une place se libère.</p>
-        </div>
-        """
+        </div>"""
         envoyer_mail(mdp.email, f"Liste d'attente — {nom_f}", html)
         flash("Vous avez été ajouté(e) à la liste d'attente.", "success")
     return redirect(url_for('reservation'))
@@ -496,8 +442,7 @@ def gerer():
         resa = Reservation.query.filter_by(code=code, annulee=False).first()
         if not resa:
             erreur = "Code introuvable ou réservation déjà annulée."
-    return render_template('gerer.html', resa=resa, erreur=erreur,
-                           creneaux_dispos=_creneaux_dispos_pour(resa) if resa else [])
+    return render_template('gerer.html', resa=resa, erreur=erreur, creneaux_dispos=_creneaux_dispos_pour(resa) if resa else [])
 
 def _creneaux_dispos_pour(resa):
     if not resa:
@@ -520,18 +465,11 @@ def modifier(code):
     notifier_suivant_attente(ancien.id)
     f = nouveau.formation
     nom_f = f"{f['niveau']} {f['nom']}" if f else ''
-    html = f"""
-    <div style="font-family:Arial,sans-serif;max-width:500px;margin:0 auto;padding:30px;background:#f0f7ff;border-radius:12px;">
+    html = f"""<div style="font-family:Arial,sans-serif;max-width:500px;margin:0 auto;padding:30px;background:#f0f7ff;border-radius:12px;">
       <h2 style="color:#1565c0;">✏️ Réservation modifiée</h2>
-      <p>Votre réservation <b>{code}</b> a été déplacée sur :</p>
-      <div style="background:#fff;border:2px solid #1565c0;border-radius:8px;padding:14px;margin:14px 0;">
-        <b>{nom_f}</b><br>
-        {nouveau.date.strftime('%d/%m/%Y')} — {nouveau.heure_debut} à {nouveau.heure_fin}<br>
-        Salle : {nouveau.salle or '—'}
-      </div>
+      <p>Votre réservation <b>{code}</b> a été déplacée sur : <b>{nom_f}</b> le {date_fr(nouveau.date)} de {nouveau.heure_debut} à {nouveau.heure_fin}.</p>
       <p>Une nouvelle convention vous est envoyée en pièce jointe.</p>
-    </div>
-    """
+    </div>"""
     pdf = generer_convention_pdf(resa)
     envoyer_mail(resa.etab_email, f"Modification réservation {code}", html, [(f"convention_{code}.pdf", pdf)])
     flash("Réservation modifiée. Une nouvelle convention vous a été envoyée.", "success")
@@ -547,17 +485,13 @@ def annuler(code):
     cr = resa.creneau
     f = cr.formation
     nom_f = f"{f['niveau']} {f['nom']}" if f else ''
-    html = f"""
-    <div style="font-family:Arial,sans-serif;max-width:500px;margin:0 auto;padding:30px;">
+    html = f"""<div style="font-family:Arial,sans-serif;max-width:500px;margin:0 auto;padding:30px;">
       <h2 style="color:#d94f4f;">❌ Annulation confirmée</h2>
-      <p>La réservation <b>{code}</b> ({resa.eleve_prenom} {resa.eleve_nom} — {nom_f} le {cr.date.strftime('%d/%m/%Y')}) a bien été annulée.</p>
-    </div>
-    """
+      <p>La réservation <b>{code}</b> ({resa.eleve_prenom} {resa.eleve_nom} — {nom_f} le {date_fr(cr.date)}) a bien été annulée.</p>
+    </div>"""
     envoyer_mail(resa.etab_email, f"Annulation réservation {code}", html)
     flash("Réservation annulée.", "success")
     return redirect(url_for('gerer'))
-
-# ── ADMIN ────────────────────────────────────────────────────
 
 @app.route('/admin', methods=['GET','POST'])
 def admin_login():
@@ -574,7 +508,7 @@ def admin_dashboard():
     creneaux = Creneau.query.order_by(Creneau.date, Creneau.heure_debut).all()
     reservations = Reservation.query.filter_by(annulee=False).order_by(Reservation.date_reservation.desc()).all()
     attentes = ListeAttente.query.filter_by(confirme=False).order_by(ListeAttente.date_ajout).all()
-    return render_template('admin_dashboard.html', creneaux=creneaux, reservations=reservations, attentes=attentes, formations=FORMATIONS, today=date.today())
+    return render_template('admin_dashboard.html', creneaux=creneaux, reservations=reservations, attentes=attentes, formations=FORMATIONS, today=date.today(), date_fr=date_fr)
 
 @app.route('/admin/creneau/ajouter', methods=['POST'])
 @admin_required
@@ -616,25 +550,10 @@ def admin_logout():
     session.pop('admin', None)
     return redirect(url_for('index'))
 
-# ── INIT DB ─────────────────────────────────────────────────
 def init_db():
     with app.app_context():
         db.create_all()
-        if Creneau.query.count() == 0:
-            creneaux = [
-                Creneau(formation_id='bp-ecp', date=date(2026,3,23), heure_debut='08:00', heure_fin='10:00', salle='A002', professeur='Mme KRAISIN', places_max=2),
-                Creneau(formation_id='bp-ecp', date=date(2026,3,23), heure_debut='10:00', heure_fin='12:00', salle='A002', professeur='Mme KRAISIN', places_max=2),
-                Creneau(formation_id='bp-ecp', date=date(2026,3,23), heure_debut='08:00', heure_fin='10:00', salle='A003', professeur='Mme CRETEUR', places_max=2),
-                Creneau(formation_id='bp-ecp', date=date(2026,3,23), heure_debut='10:00', heure_fin='12:00', salle='A003', professeur='Mme CRETEUR', places_max=2),
-                Creneau(formation_id='bp-ecp', date=date(2026,3,30), heure_debut='08:00', heure_fin='12:00', salle='A003', professeur='Mme CRETEUR', places_max=2),
-                Creneau(formation_id='bp-ecp', date=date(2026,3,30), heure_debut='08:00', heure_fin='10:00', salle='A002', professeur='Mme KRAISIN', places_max=2),
-                Creneau(formation_id='bp-ecp', date=date(2026,3,30), heure_debut='10:00', heure_fin='12:00', salle='A002', professeur='Mme KRAISIN', places_max=2),
-                Creneau(formation_id='bp-ecp', date=date(2026,3,24), heure_debut='14:00', heure_fin='16:00', salle='A003', professeur='Mme LEFEVRE', places_max=2),
-                Creneau(formation_id='bp-ecp', date=date(2026,3,24), heure_debut='16:00', heure_fin='18:00', salle='A003', professeur='Mme LEFEVRE', places_max=2),
-            ]
-            for cr in creneaux:
-                db.session.add(cr)
-            db.session.commit()
+
 init_db()
 
 if __name__ == '__main__':
