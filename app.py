@@ -16,7 +16,7 @@ app.config['SQLALCHEMY_DATABASE_URI'] = os.environ.get('DATABASE_URL', 'sqlite:/
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 
 MAIL_FROM = os.environ.get('MAIL_FROM', 'ministagesfernandleger@gmail.com')
-MAIL_PASS = os.environ.get('MAIL_PASS', '')
+MAIL_NOTIF = 'ministagesfernandleger@gmail.com'
 ADMIN_PASS = os.environ.get('ADMIN_PASS', 'admin2025')
 ACADEMIES = ['ac-versailles.fr', 'ac-creteil.fr', 'ac-paris.fr']
 SITE_URL = os.environ.get('SITE_URL', 'https://ministages-fernandnadialeger.onrender.com')
@@ -125,7 +125,6 @@ def email_ok(email):
     return any(email.lower().strip().endswith('@' + a) for a in ACADEMIES)
 
 def envoyer_mail(dest, sujet, html, pieces=None):
-    # dest peut être une string ou une liste
     if isinstance(dest, str):
         dest = [dest]
     dest = [d for d in dest if d and d.strip()]
@@ -151,6 +150,13 @@ def envoyer_mail(dest, sujet, html, pieces=None):
         print(f"Erreur mail: {e}")
         return False
 
+def destinataires_resa(resa):
+    return list(dict.fromkeys(filter(None, [
+        resa.etab_email,
+        resa.etab_email_direct if resa.etab_email_direct != resa.etab_email else None,
+        resa.contact_email if resa.contact_email not in [resa.etab_email, resa.etab_email_direct] else None,
+    ])))
+
 def notifier_suivant_attente(creneau_id):
     cr = Creneau.query.get(creneau_id)
     if not cr or cr.complet:
@@ -165,9 +171,9 @@ def notifier_suivant_attente(creneau_id):
       <p>Bonjour,</p>
       <p>Une place vient de se libérer pour le mini-stage <strong>{nom_formation}</strong> le {date_fr(cr.date)} de {cr.heure_debut} à {cr.heure_fin}.</p>
       <p>Vous avez <strong>24 heures</strong> pour confirmer votre place :</p>
-      <a href="{lien}" style="display:inline-block;background:#1565c0;color:#fff;padding:12px 24px;border-radius:8px;text-decoration:none;font-weight:bold;">Confirmer ma place →</a>
+      <a href="{lien}" style="display:inline-block;background:#1565c0;color:#fff;padding:12px 24px;border-radius:8px;text-decoration:none;font-weight:bold;">Confirmer ma place</a>
       <p style="color:#888;font-size:12px;margin-top:20px;">Sans confirmation dans les 24h, la place sera proposée au suivant.</p>
-      <p style="color:#888;font-size:12px;">⚠️ Ceci est un mail automatique. Pour nous contacter : <a href="mailto:ministagesfernandleger@gmail.com">ministagesfernandleger@gmail.com</a></p>
+      <p style="color:#888;font-size:12px;">Ceci est un mail automatique. Pour nous contacter : ministagesfernandleger@gmail.com</p>
     </div>"""
     if envoyer_mail(suivant.etab_email, f"Place disponible — {nom_formation}", html):
         suivant.notifie = True
@@ -313,7 +319,7 @@ def demander_mdp():
           <p>Rendez-vous sur le site : <a href="{SITE_URL}">{SITE_URL}</a></p>
           <p><strong>Conservez ce mot de passe</strong> — il reste valable, inutile d'en redemander un nouveau à chaque fois.</p>
           <hr style="border:none;border-top:1px solid #ddd;margin:20px 0;">
-          <p style="color:#888;font-size:12px;">⚠️ Ceci est un mail automatique, merci de ne pas y répondre. Pour nous contacter : <a href="mailto:ministagesfernandleger@gmail.com">ministagesfernandleger@gmail.com</a></p>
+          <p style="color:#888;font-size:12px;">Ceci est un mail automatique, merci de ne pas y répondre. Pour nous contacter : ministagesfernandleger@gmail.com</p>
           <p style="color:#888;font-size:12px;">{LYCEE['nom']} — {LYCEE['adresse']}</p>
         </div>"""
         envoyer_mail(email, f"Votre mot de passe — Mini-Stages {LYCEE['nom']}", html)
@@ -374,14 +380,7 @@ def reservation():
         pdf = generer_convention_pdf(resa)
         f = cr.formation
         nom_f = f"{f['niveau']} {f['nom']}" if f else cr.formation_id
-
-        # Collecte toutes les adresses destinataires (sans doublons)
-        destinataires = list(dict.fromkeys(filter(None, [
-            session['etab_email'],
-            etab_email_direct if etab_email_direct != session['etab_email'] else None,
-            contact_email if contact_email not in [session['etab_email'], etab_email_direct] else None,
-        ])))
-
+        dest = destinataires_resa(resa)
         html = f"""<div style="font-family:Arial,sans-serif;max-width:600px;margin:0 auto;padding:30px;">
           <p>Bonjour,</p>
           <p>L'inscription au mini-stage du <strong>{LYCEE['nom']}</strong> est bien enregistrée.</p>
@@ -414,10 +413,11 @@ def reservation():
           </ul>
           <p>Votre réservation a été réalisée le {date_fr(date.today())}. Nous vous remercions de l'intérêt porté à nos formations.</p>
           <hr style="border:none;border-top:1px solid #ddd;margin:20px 0;">
-          <p style="color:#888;font-size:12px;">⚠️ Ceci est un mail automatique, merci de ne pas y répondre. Pour nous contacter : <a href="mailto:ministagesfernandleger@gmail.com">ministagesfernandleger@gmail.com</a></p>
+          <p style="color:#888;font-size:12px;">Ceci est un mail automatique, merci de ne pas y répondre. Pour nous contacter : ministagesfernandleger@gmail.com</p>
           <p style="color:#888;font-size:12px;">{LYCEE['nom']} — {LYCEE['adresse']}</p>
         </div>"""
-        envoyer_mail(destinataires, f"Confirmation mini-stage — {nom_f} le {date_fr(cr.date)}", html, [(f"convention_{code}.pdf", pdf)])
+        envoyer_mail(dest, f"Confirmation mini-stage — {nom_f} le {date_fr(cr.date)}", html, [(f"convention_{code}.pdf", pdf)])
+        envoyer_mail(MAIL_NOTIF, f"[NOUVELLE RÉSA] {nom_f} — {resa.eleve_prenom} {resa.eleve_nom} le {date_fr(cr.date)}", html, [(f"convention_{code}.pdf", pdf)])
         return redirect(url_for('confirmation', code=code))
     return render_template('reservation.html', formations=FORMATIONS, par_formation=par_formation, etab_email=session.get('etab_email'), date_fr=date_fr)
 
@@ -454,7 +454,7 @@ def liste_attente():
           <p>Bonjour,</p>
           <p>Vous êtes inscrit(e) sur la liste d'attente pour <strong>{nom_f}</strong> le {date_fr(cr.date)} de {cr.heure_debut} à {cr.heure_fin}.</p>
           <p>Vous serez notifié(e) par mail dès qu'une place se libère.</p>
-          <p style="color:#888;font-size:12px;">⚠️ Ceci est un mail automatique. Pour nous contacter : <a href="mailto:ministagesfernandleger@gmail.com">ministagesfernandleger@gmail.com</a></p>
+          <p style="color:#888;font-size:12px;">Ceci est un mail automatique. Pour nous contacter : ministagesfernandleger@gmail.com</p>
         </div>"""
         envoyer_mail(mdp.email, f"Liste d'attente — {nom_f}", html)
         flash("Vous avez été ajouté(e) à la liste d'attente.", "success")
@@ -518,15 +518,15 @@ def modifier(code):
     notifier_suivant_attente(ancien.id)
     f = nouveau.formation
     nom_f = f"{f['niveau']} {f['nom']}" if f else ''
-    destinataires = list(dict.fromkeys(filter(None, [resa.etab_email, resa.etab_email_direct, resa.contact_email])))
+    dest = destinataires_resa(resa)
     html = f"""<div style="font-family:Arial,sans-serif;max-width:500px;margin:0 auto;padding:30px;">
       <p>Bonjour,</p>
       <p>Votre réservation <strong>{code}</strong> a été modifiée. Nouveau créneau : <strong>{nom_f}</strong> le {date_fr(nouveau.date)} de {nouveau.heure_debut} à {nouveau.heure_fin}.</p>
       <p>Une nouvelle convention vous est envoyée en pièce jointe.</p>
-      <p style="color:#888;font-size:12px;">⚠️ Ceci est un mail automatique. Pour nous contacter : <a href="mailto:ministagesfernandleger@gmail.com">ministagesfernandleger@gmail.com</a></p>
+      <p style="color:#888;font-size:12px;">Ceci est un mail automatique. Pour nous contacter : ministagesfernandleger@gmail.com</p>
     </div>"""
     pdf = generer_convention_pdf(resa)
-    envoyer_mail(destinataires, f"Modification réservation {code}", html, [(f"convention_{code}.pdf", pdf)])
+    envoyer_mail(dest, f"Modification réservation {code}", html, [(f"convention_{code}.pdf", pdf)])
     flash("Réservation modifiée. Une nouvelle convention vous a été envoyée.", "success")
     return redirect(url_for('gerer'))
 
@@ -540,13 +540,13 @@ def annuler(code):
     cr = resa.creneau
     f = cr.formation
     nom_f = f"{f['niveau']} {f['nom']}" if f else ''
-    destinataires = list(dict.fromkeys(filter(None, [resa.etab_email, resa.etab_email_direct, resa.contact_email])))
+    dest = destinataires_resa(resa)
     html = f"""<div style="font-family:Arial,sans-serif;max-width:500px;margin:0 auto;padding:30px;">
       <p>Bonjour,</p>
       <p>La réservation <strong>{code}</strong> ({resa.eleve_prenom} {resa.eleve_nom} — {nom_f} le {date_fr(cr.date)}) a bien été annulée.</p>
-      <p style="color:#888;font-size:12px;">⚠️ Ceci est un mail automatique. Pour nous contacter : <a href="mailto:ministagesfernandleger@gmail.com">ministagesfernandleger@gmail.com</a></p>
+      <p style="color:#888;font-size:12px;">Ceci est un mail automatique. Pour nous contacter : ministagesfernandleger@gmail.com</p>
     </div>"""
-    envoyer_mail(destinataires, f"Annulation réservation {code}", html)
+    envoyer_mail(dest, f"Annulation réservation {code}", html)
     flash("Réservation annulée.", "success")
     return redirect(url_for('gerer'))
 
