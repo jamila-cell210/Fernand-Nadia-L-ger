@@ -132,8 +132,10 @@ def envoyer_mail(dest, sujet, html, pieces=None):
                 encoders.encode_base64(part)
                 part.add_header('Content-Disposition', f'attachment; filename="{nom}"')
                 msg.attach(part)
-        with smtplib.SMTP('smtp.gmail.com', 587) as server:
+        with smtplib.SMTP('smtp.gmail.com', 587, timeout=30) as server:
+            server.ehlo()
             server.starttls()
+            server.ehlo()
             server.login(MAIL_FROM, MAIL_PASS)
             server.send_message(msg)
         return True
@@ -477,12 +479,12 @@ def confirmer_attente(token):
 
 @app.route('/rgpd')
 def rgpd():
-   return render_template('rgpd.html')
+    return render_template('rgpd.html')
 
 @app.route('/contact')
 def contact():
     return render_template('contact.html')
-    
+
 @app.route('/gerer', methods=['GET','POST'])
 def gerer():
     resa = None
