@@ -59,7 +59,6 @@ class Creneau(db.Model):
     places_max   = db.Column(db.Integer, default=4)
     actif        = db.Column(db.Boolean, default=True)
     reservations = db.relationship('Reservation', backref='creneau', lazy=True)
-    attentes     = db.relationship('ListeAttente', backref='creneau', lazy=True)
 
     @property
     def formation(self):
@@ -102,17 +101,6 @@ class Reservation(db.Model):
     date_reservation  = db.Column(db.DateTime, default=datetime.now)
     annulee           = db.Column(db.Boolean, default=False)
 
-class ListeAttente(db.Model):
-    id           = db.Column(db.Integer, primary_key=True)
-    creneau_id   = db.Column(db.Integer, db.ForeignKey('creneau.id'), nullable=False)
-    etab_email   = db.Column(db.String(200), nullable=False)
-    etab_nom     = db.Column(db.String(200), default='')
-    token        = db.Column(db.String(30), unique=True, nullable=False)
-    date_ajout   = db.Column(db.DateTime, default=datetime.now)
-    notifie      = db.Column(db.Boolean, default=False)
-    date_notif   = db.Column(db.DateTime, nullable=True)
-    confirme     = db.Column(db.Boolean, default=False)
-
 class MotDePasse(db.Model):
     id         = db.Column(db.Integer, primary_key=True)
     email      = db.Column(db.String(200), unique=True, nullable=False)
@@ -152,34 +140,13 @@ def envoyer_mail(dest, sujet, html, pieces=None):
         return False
 
 def destinataires_resa(resa):
-    return list(dict.fromkeys(filter(None, [
+    tous = [
         resa.etab_email,
-        resa.etab_email_direct if resa.etab_email_direct != resa.etab_email else None,
-        resa.contact_email if resa.contact_email not in [resa.etab_email, resa.etab_email_direct] else None,
-    ])))
-
-def notifier_suivant_attente(creneau_id):
-    cr = Creneau.query.get(creneau_id)
-    if not cr or cr.complet:
-        return
-    suivant = ListeAttente.query.filter_by(creneau_id=creneau_id, notifie=False, confirme=False).order_by(ListeAttente.date_ajout).first()
-    if not suivant:
-        return
-    f = cr.formation
-    nom_formation = f"{f['niveau']} {f['nom']}" if f else "Formation"
-    lien = url_for('confirmer_attente', token=suivant.token, _external=True)
-    html = f"""<div style="font-family:Arial,sans-serif;max-width:560px;margin:0 auto;padding:30px;">
-      <p>Bonjour,</p>
-      <p>Une place vient de se libérer pour le mini-stage <strong>{nom_formation}</strong> le {date_fr(cr.date)} de {cr.heure_debut} à {cr.heure_fin}.</p>
-      <p>Vous avez <strong>24 heures</strong> pour confirmer votre place :</p>
-      <a href="{lien}" style="display:inline-block;background:#1565c0;color:#fff;padding:12px 24px;border-radius:8px;text-decoration:none;font-weight:bold;">Confirmer ma place</a>
-      <p style="color:#888;font-size:12px;margin-top:20px;">Sans confirmation dans les 24h, la place sera proposée au suivant.</p>
-      <p style="color:#888;font-size:12px;">Ceci est un mail automatique. Pour nous contacter : ministagesfernandleger@gmail.com</p>
-    </div>"""
-    if envoyer_mail(suivant.etab_email, f"Place disponible — {nom_formation}", html):
-        suivant.notifie = True
-        suivant.date_notif = datetime.now()
-        db.session.commit()
+        resa.etab_email_direct,
+        resa.contact_email,
+        resa.resp_legal_email,
+    ]
+    return list(dict.fromkeys(d for d in tous if d and d.strip()))
 
 def generer_convention_pdf(resa):
     buffer = io.BytesIO()
@@ -204,7 +171,6 @@ def generer_convention_pdf(resa):
     nom_formation = f"{f['niveau']} {f['nom']}" if f else cr.formation_id
     contact_display = f"{resa.contact_nom} {resa.contact_prenom}".strip() if resa.contact_nom else resa.etab_contact
 
-    # Logo
     logo_path = os.path.join(os.path.dirname(__file__), 'logo.png')
     if os.path.exists(logo_path):
         try:
@@ -440,8 +406,8 @@ def reservation():
           <p>L'inscription au mini-stage du <strong>{LYCEE['nom']}</strong> est bien enregistrée.</p>
           <p>Votre code personnel pour modifier ou annuler le stage est : <strong style="color:#1565c0;font-size:1.1rem;letter-spacing:2px;">{code}</strong></p>
           <p>Site des mini-stages : <a href="{SITE_URL}">{SITE_URL}</a></p>
-          <p>Vous trouverez, en pièce jointe, la convention. Elle doit être signée par le chef d'établissement demandeur, l'élève et le(s) responsable(s) légal(aux). L'élève devra être en possession de celle-ci le jour du stage.</p>
-          <p><strong>Un élève sans convention signée ne pourra être accepté dans les locaux du lycée.</strong></p>
+          <p>Vous trouverez, en pièce jointe, la convention. Elle doit être signée par le responsable légal et l'établissement d'origine (cachet + signature). L'élève devra être en possession de celle-ci le jour du stage.</p>
+          <p><strong>Un élève sans convention signée ne pourra être accepté dans les locaux du lycée. Une réservation = un élève.</strong></p>
           <p>Il n'est pas nécessaire de la renvoyer avant. L'absence de nouvelle de notre part vaut acceptation du stage. L'élève se présentera 10 minutes avant l'heure prévue.</p>
           <hr style="border:none;border-top:1px solid #ddd;margin:20px 0;">
           <p><strong>Élève :</strong> {resa.eleve_prenom} {resa.eleve_nom}</p>
@@ -486,52 +452,6 @@ def telecharger_convention(code):
     pdf = generer_convention_pdf(resa)
     return send_file(io.BytesIO(pdf), mimetype='application/pdf', as_attachment=True, download_name=f"convention_{code}.pdf")
 
-@app.route('/liste-attente', methods=['POST'])
-def liste_attente():
-    creneau_id = request.form.get('creneau_id')
-    pwd = session.get('pwd_valide')
-    mdp = MotDePasse.query.filter_by(code=pwd).first() if pwd else None
-    if not mdp:
-        flash("Session expirée, reconnectez-vous.", "error")
-        return redirect(url_for('index'))
-    cr = Creneau.query.get_or_404(creneau_id)
-    deja = ListeAttente.query.filter_by(creneau_id=creneau_id, etab_email=mdp.email, confirme=False).first()
-    if deja:
-        flash("Vous êtes déjà sur la liste d'attente pour ce créneau.", "info")
-    else:
-        token = gen_code(20)
-        db.session.add(ListeAttente(creneau_id=cr.id, etab_email=mdp.email, etab_nom='', token=token))
-        db.session.commit()
-        f = cr.formation
-        nom_f = f"{f['niveau']} {f['nom']}" if f else cr.formation_id
-        html = f"""<div style="font-family:Arial,sans-serif;max-width:500px;margin:0 auto;padding:30px;">
-          <p>Bonjour,</p>
-          <p>Vous êtes inscrit(e) sur la liste d'attente pour <strong>{nom_f}</strong> le {date_fr(cr.date)} de {cr.heure_debut} à {cr.heure_fin}.</p>
-          <p>Vous serez notifié(e) par mail dès qu'une place se libère.</p>
-          <p style="color:#888;font-size:12px;">Ceci est un mail automatique. Pour nous contacter : ministagesfernandleger@gmail.com</p>
-        </div>"""
-        envoyer_mail(mdp.email, f"Liste d'attente — {nom_f}", html)
-        flash("Vous avez été ajouté(e) à la liste d'attente.", "success")
-    return redirect(url_for('reservation'))
-
-@app.route('/confirmer-attente/<token>')
-def confirmer_attente(token):
-    att = ListeAttente.query.filter_by(token=token, confirme=False).first_or_404()
-    if att.date_notif and datetime.now() - att.date_notif > timedelta(hours=24):
-        flash("Ce lien a expiré (24h).", "error")
-        db.session.delete(att)
-        db.session.commit()
-        notifier_suivant_attente(att.creneau_id)
-        return redirect(url_for('index'))
-    session['etab_email'] = att.etab_email
-    mdp = MotDePasse.query.filter_by(email=att.etab_email).first()
-    if mdp:
-        session['pwd_valide'] = mdp.code
-    att.confirme = True
-    db.session.commit()
-    flash("Place confirmée ! Complétez votre réservation.", "success")
-    return redirect(url_for('reservation'))
-
 @app.route('/rgpd')
 def rgpd():
     return render_template('rgpd.html')
@@ -569,7 +489,6 @@ def modifier(code):
     ancien = resa.creneau
     resa.creneau_id = nouveau.id
     db.session.commit()
-    notifier_suivant_attente(ancien.id)
     f = nouveau.formation
     nom_f = f"{f['niveau']} {f['nom']}" if f else ''
     dest = destinataires_resa(resa)
@@ -590,7 +509,6 @@ def annuler(code):
     creneau_id = resa.creneau_id
     resa.annulee = True
     db.session.commit()
-    notifier_suivant_attente(creneau_id)
     cr = resa.creneau
     f = cr.formation
     nom_f = f"{f['niveau']} {f['nom']}" if f else ''
@@ -618,8 +536,7 @@ def admin_login():
 def admin_dashboard():
     creneaux = Creneau.query.order_by(Creneau.date, Creneau.heure_debut).all()
     reservations = Reservation.query.filter_by(annulee=False).order_by(Reservation.date_reservation.desc()).all()
-    attentes = ListeAttente.query.filter_by(confirme=False).order_by(ListeAttente.date_ajout).all()
-    return render_template('admin_dashboard.html', creneaux=creneaux, reservations=reservations, attentes=attentes, formations=FORMATIONS, today=date.today(), date_fr=date_fr)
+    return render_template('admin_dashboard.html', creneaux=creneaux, reservations=reservations, formations=FORMATIONS, today=date.today(), date_fr=date_fr)
 
 @app.route('/admin/creneau/ajouter', methods=['POST'])
 @admin_required
