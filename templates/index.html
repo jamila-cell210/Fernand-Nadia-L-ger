@@ -16,7 +16,7 @@
 .hero-card{background:#fff;border-radius:20px;box-shadow:var(--sh2);padding:1.8rem;border:1px solid var(--border);animation:fu .7s .2s ease both}
 .hc-title{font-size:.7rem;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:var(--muted);margin-bottom:1rem}
 .flist{display:flex;flex-direction:column;gap:.45rem}
-.fitem{display:flex;align-items:center;padding:.6rem .85rem;border-radius:10px;background:var(--pale);border:1px solid transparent;transition:all .2s}
+.fitem{display:flex;align-items:center;justify-content:space-between;padding:.6rem .85rem;border-radius:10px;background:var(--pale);border:1px solid transparent;transition:all .2s;text-decoration:none;color:inherit}
 .fitem:hover{border-color:var(--blue);background:var(--light)}
 .fname{font-size:.8rem;font-weight:600;color:var(--text);display:flex;align-items:center;gap:.45rem}
 .tag{font-size:.63rem;font-weight:700;padding:.15rem .5rem;border-radius:4px;letter-spacing:.04em;white-space:nowrap}
@@ -81,29 +81,28 @@
 <section class="hero">
   <div class="hero-inner">
 
-    <!-- COLONNE GAUCHE -->
     <div>
-    <img src="https://raw.githubusercontent.com/jamila-cell210/Fernand-Nadia-L-ger/main/logo.png" alt="Logo" style="height:100px;;margin-bottom:1.2rem;display:block;object-fit:contain;" onerror="this.style.display='none'">
-     <div class="badge"><div class="dot"></div> Réservations ouvertes 2025–2026</div>
+      <img src="https://raw.githubusercontent.com/jamila-cell210/Fernand-Nadia-L-ger/main/logo.png" alt="Logo" style="height:100px;margin-bottom:1.2rem;display:block;object-fit:contain;" onerror="this.style.display='none'">
+      <div class="badge"><div class="dot"></div> Réservations ouvertes 2025–2026</div>
       <h1>Venez explorer<br><em>nos formations</em></h1>
       <p class="desc">Le Lycée Fernand et Nadia Léger accueille les élèves de 4ème, 3ème et 2nde pour des mini-stages d'observation de 2 à 4h — une occasion unique de découvrir nos filières avant de s'orienter.</p>
       <div class="hero-ctas">
-        <button class="btn-primary" onclick="openModal()">📅 Faire une réservation</button>
+        <button class="btn-primary" onclick="openModal()">🗓 Faire une réservation</button>
         <a href="#infos" class="btn-outline">En savoir plus</a>
       </div>
     </div>
 
-    <!-- COLONNE DROITE -->
     <div class="hero-card">
       <div class="hc-title">Nos formations disponibles</div>
       <div class="flist">
         {% for f in formations %}
-        <div class="fitem">
+        <a class="fitem" href="{{ f.onisep }}" target="_blank">
           <span class="fname">
             <span class="tag {{'tag-cap' if f.niveau=='CAP' else ('tag-techno' if f.niveau=='BAC TECHNO' else 'tag-bac')}}">{{f.niveau}}</span>
             {{f.emoji}} {{f.nom}}
           </span>
-        </div>
+          <span style="font-size:.7rem;color:var(--muted)">→</span>
+        </a>
         {% endfor %}
       </div>
     </div>
@@ -154,7 +153,6 @@
       <ul>
         <li>L'élève doit se présenter avec la convention signée par son responsable légal et le chef d'établissement</li>
         <li>La signature de l'établissement d'accueil n'est pas requise à l'avance</li>
-          <li>Aucune nouvelle de notre part vaut acceptation du stage</li>
         <li>Se présenter 10 minutes avant le début</li>
       </ul>
       <div class="callout c-red">⚠️ Sans signature du responsable légal ou du chef d'établissement, l'élève ne pourra pas être accepté.</div>
@@ -164,6 +162,7 @@
       <h3>✅ Après le stage</h3>
       <ul>
         <li>L'élève repart avec la convention co-signée par le lycée, attestant de son passage</li>
+        <li>Aucune nouvelle de notre part vaut acceptation du stage</li>
       </ul>
       <div class="callout c-orange">⚡ Nous recevons énormément de demandes et nous ne pourrons malheureusement pas répondre favorablement à toutes. Merci de ne réserver que pour des élèves réellement motivés.</div>
     </div>
@@ -176,7 +175,7 @@
   <h2 class="sec-title">Par où commencer ?</h2>
   <div class="actions-grid">
     <div class="acard feat" onclick="openModal()">
-      <div class="aicon">📅</div>
+      <div class="aicon">🗓</div>
       <div class="atitle">Faire une réservation</div>
       <p class="adesc">Réservez un mini-stage pour un élève. Accès réservé aux établissements avec adresse académique.</p>
       <button class="abtn">Accéder →</button>
