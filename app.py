@@ -19,6 +19,7 @@ MAIL_FROM = os.environ.get('MAIL_FROM', 'ministagesfernandleger@gmail.com')
 MAIL_PASS = os.environ.get('MAIL_PASS', '')
 ADMIN_PASS = os.environ.get('ADMIN_PASS', 'admin2025')
 ACADEMIES = ['ac-versailles.fr', 'ac-creteil.fr', 'ac-paris.fr']
+SITE_URL = os.environ.get('SITE_URL', 'https://ministages-fernandnadialeger.onrender.com')
 
 LYCEE = {
     'nom': 'Lycée Polyvalent Fernand et Nadia Léger',
@@ -147,11 +148,13 @@ def notifier_suivant_attente(creneau_id):
     f = cr.formation
     nom_formation = f"{f['niveau']} {f['nom']}" if f else "Formation"
     lien = url_for('confirmer_attente', token=suivant.token, _external=True)
-    html = f"""<div style="font-family:Arial,sans-serif;max-width:560px;margin:0 auto;padding:30px;background:#f0f7ff;border-radius:12px;">
-      <h2 style="color:#1565c0;">Une place s'est libérée !</h2>
-      <p>Une place vient de se libérer pour : <b>{nom_formation}</b> le {date_fr(cr.date)} de {cr.heure_debut} à {cr.heure_fin}</p>
-      <p>Vous avez <strong>24 heures</strong> pour confirmer :</p>
+    html = f"""<div style="font-family:Arial,sans-serif;max-width:560px;margin:0 auto;padding:30px;">
+      <p>Bonjour,</p>
+      <p>Une place vient de se libérer pour le mini-stage <strong>{nom_formation}</strong> le {date_fr(cr.date)} de {cr.heure_debut} à {cr.heure_fin}.</p>
+      <p>Vous avez <strong>24 heures</strong> pour confirmer votre place :</p>
       <a href="{lien}" style="display:inline-block;background:#1565c0;color:#fff;padding:12px 24px;border-radius:8px;text-decoration:none;font-weight:bold;">Confirmer ma place →</a>
+      <p style="color:#888;font-size:12px;margin-top:20px;">Sans confirmation dans les 24h, la place sera proposée au suivant.</p>
+      <p style="color:#888;font-size:12px;">⚠️ Ceci est un mail automatique. Pour nous contacter : <a href="mailto:ministagesfernandleger@gmail.com">ministagesfernandleger@gmail.com</a></p>
     </div>"""
     if envoyer_mail(suivant.etab_email, f"Place disponible — {nom_formation}", html):
         suivant.notifie = True
@@ -187,8 +190,7 @@ def generer_convention_pdf(resa):
         ('BACKGROUND',(0,0),(0,-1),colors.HexColor('#e3f0fb')),
         ('GRID',(0,0),(-1,-1),0.5,colors.HexColor('#c0d8f0')),
         ('ROWBACKGROUNDS',(0,0),(-1,-1),[colors.HexColor('#f0f7ff'),colors.white]),
-        ('PADDING',(0,0),(-1,-1),5),
-        ('VALIGN',(0,0),(-1,-1),'MIDDLE'),
+        ('PADDING',(0,0),(-1,-1),5),('VALIGN',(0,0),(-1,-1),'MIDDLE'),
     ]))
     story.append(t_stage)
     story.append(Spacer(1, 0.4*cm))
@@ -229,8 +231,7 @@ def generer_convention_pdf(resa):
         ('BACKGROUND',(0,0),(0,0),colors.HexColor('#f0f7ff')),
         ('BACKGROUND',(1,0),(1,0),colors.white),
         ('BACKGROUND',(2,0),(2,0),colors.HexColor('#f0f7ff')),
-        ('PADDING',(0,0),(-1,-1),8),
-        ('VALIGN',(0,0),(-1,-1),'TOP'),
+        ('PADDING',(0,0),(-1,-1),8),('VALIGN',(0,0),(-1,-1),'TOP'),
     ]))
     story.append(t3col)
     story.append(Spacer(1, 0.4*cm))
@@ -238,9 +239,9 @@ def generer_convention_pdf(resa):
     story.append(Paragraph("DISPOSITIONS GÉNÉRALES", ParagraphStyle('dg', fontSize=9, fontName='Helvetica-Bold', textColor=bleu, spaceAfter=6)))
     for d in [
         "La présente convention a pour objet de définir les modalités d'un mini-stage entre l'élève et son représentant légal, l'établissement d'origine et l'établissement d'accueil.",
-        "Le trajet aller-retour de l'élève, entre son établissement d'origine ou son domicile et le lycée d'accueil, se fait sous la responsabilité et à la charge de sa famille.",
-        "Durant le mini-stage, l'élève est associé aux activités proposées par l'établissement d'accueil. Il est soumis au règlement intérieur du lycée d'accueil.",
-        "L'élève devra se présenter à l'accueil 10 minutes avant le début de la séquence muni de cette convention dûment complétée et signée.",
+        "Le trajet aller-retour de l'élève se fait sous la responsabilité et à la charge de sa famille.",
+        "Durant le mini-stage, l'élève est soumis au règlement intérieur du lycée d'accueil.",
+        "L'élève devra se présenter 10 minutes avant le début de la séquence muni de cette convention dûment complétée et signée.",
     ]:
         story.append(Paragraph(f"• {d}", norm8))
     story.append(Spacer(1, 0.5*cm))
@@ -290,15 +291,16 @@ def demander_mdp():
         else:
             db.session.add(MotDePasse(email=email, code=code))
         db.session.commit()
-        html = f"""<div style="font-family:Arial,sans-serif;max-width:500px;margin:0 auto;padding:30px;background:#f0f7ff;border-radius:12px;">
-          <h2 style="color:#1565c0;">🎓 Mini-Stages — {LYCEE['nom']}</h2>
-          <p>Voici votre mot de passe pour accéder aux réservations :</p>
-          <div style="background:#fff;border:2px solid #1565c0;border-radius:8px;padding:20px;text-align:center;margin:20px 0;">
+        html = f"""<div style="font-family:Arial,sans-serif;max-width:500px;margin:0 auto;padding:30px;">
+          <p>Bonjour,</p>
+          <p>Voici votre mot de passe pour accéder aux réservations de mini-stages du <strong>{LYCEE['nom']}</strong> :</p>
+          <div style="background:#f0f7ff;border:2px solid #1565c0;border-radius:8px;padding:20px;text-align:center;margin:20px 0;">
             <span style="font-size:30px;font-weight:bold;letter-spacing:8px;color:#1565c0;">{code}</span>
           </div>
-          <p>Rendez-vous sur le site et saisissez ce code pour effectuer votre réservation.</p>
+          <p>Rendez-vous sur le site : <a href="{SITE_URL}">{SITE_URL}</a></p>
           <p><strong>Conservez ce mot de passe</strong> — il reste valable, inutile d'en redemander un nouveau à chaque fois.</p>
-          <p style="color:#888;font-size:12px;">⚠️ Ceci est un mail automatique, merci de ne pas y répondre. Pour nous contacter : <a href="mailto:ministagesfernandleger@gmail.com" style="color:#1565c0;">ministagesfernandleger@gmail.com</a></p>
+          <hr style="border:none;border-top:1px solid #ddd;margin:20px 0;">
+          <p style="color:#888;font-size:12px;">⚠️ Ceci est un mail automatique, merci de ne pas y répondre. Pour nous contacter : <a href="mailto:ministagesfernandleger@gmail.com">ministagesfernandleger@gmail.com</a></p>
           <p style="color:#888;font-size:12px;">{LYCEE['nom']} — {LYCEE['adresse']}</p>
         </div>"""
         envoyer_mail(email, f"Votre mot de passe — Mini-Stages {LYCEE['nom']}", html)
@@ -349,21 +351,40 @@ def reservation():
         pdf = generer_convention_pdf(resa)
         f = cr.formation
         nom_f = f"{f['niveau']} {f['nom']}" if f else cr.formation_id
-        html = f"""<div style="font-family:Arial,sans-serif;max-width:600px;margin:0 auto;padding:30px;background:#f0f7ff;border-radius:12px;">
-          <h2 style="color:#1565c0;">✅ Réservation confirmée</h2>
-          <p>La réservation suivante a bien été enregistrée :</p>
-          <table style="width:100%;border-collapse:collapse;margin:16px 0;">
-            <tr><td style="padding:7px;background:#e3f0fb;font-weight:bold;width:40%;">Formation</td><td style="padding:7px;">{nom_f}</td></tr>
-            <tr><td style="padding:7px;background:#e3f0fb;font-weight:bold;">Date</td><td style="padding:7px;">{date_fr(cr.date)}</td></tr>
-            <tr><td style="padding:7px;background:#e3f0fb;font-weight:bold;">Horaires</td><td style="padding:7px;">{cr.heure_debut} – {cr.heure_fin}</td></tr>
-            <tr><td style="padding:7px;background:#e3f0fb;font-weight:bold;">Élève</td><td style="padding:7px;">{resa.eleve_prenom} {resa.eleve_nom}</td></tr>
-            <tr><td style="padding:7px;background:#e3f0fb;font-weight:bold;">Code réservation</td><td style="padding:7px;font-weight:bold;color:#1565c0;">{code}</td></tr>
-          </table>
-          <div style="background:#fff8ee;border:1px solid #fde8b0;border-radius:8px;padding:14px;margin:14px 0;">
-            <b>⚠️ Important :</b> La convention ci-jointe doit être signée par le(s) responsable(s) légal(aux) et le chef d'établissement avant le jour du stage.
-          </div>
-          <p style="color:#888;font-size:12px;">⚠️ Ceci est un mail automatique, merci de ne pas y répondre. Pour nous contacter : ministagesfernandleger@gmail.com</p>
-          <p style="color:#555;font-size:12px;">{LYCEE['nom']} — {LYCEE['adresse']}</p>
+        html = f"""<div style="font-family:Arial,sans-serif;max-width:600px;margin:0 auto;padding:30px;">
+          <p>Bonjour,</p>
+          <p>L'inscription au mini-stage du <strong>{LYCEE['nom']}</strong> est bien enregistrée.</p>
+          <p>Votre code personnel pour modifier ou annuler le stage est : <strong style="color:#1565c0;font-size:1.1rem;letter-spacing:2px;">{code}</strong></p>
+          <p>Site des mini-stages : <a href="{SITE_URL}">{SITE_URL}</a></p>
+          <p>Vous trouverez, en pièce jointe, la convention. Elle doit être signée par le chef d'établissement demandeur, l'élève et le(s) responsable(s) légal(aux). L'élève devra être en possession de celle-ci le jour du stage.</p>
+          <p><strong>Un élève sans convention signée ne pourra être accepté dans les locaux du lycée.</strong></p>
+          <p>Il n'est pas nécessaire de la renvoyer avant. L'absence de nouvelle de notre part vaut acceptation du stage. L'élève se présentera 10 minutes avant l'heure prévue.</p>
+          <hr style="border:none;border-top:1px solid #ddd;margin:20px 0;">
+          <p><strong>Élève :</strong> {resa.eleve_prenom} {resa.eleve_nom}</p>
+          <p><strong>Informations sur le mini-stage :</strong></p>
+          <ul>
+            <li>Formation : {nom_f}</li>
+            <li>Date : {date_fr(cr.date)}</li>
+            <li>Horaires : {cr.heure_debut} – {cr.heure_fin}</li>
+            <li>Salle : {cr.salle or '—'}</li>
+            <li>Professeur référent : {cr.professeur or '—'}</li>
+          </ul>
+          <p><strong>Établissement d'origine :</strong></p>
+          <ul>
+            <li>Établissement : {resa.etab_nom}</li>
+            <li>Contact : {resa.etab_contact or '—'}</li>
+            <li>Téléphone : {resa.etab_tel or '—'}</li>
+            <li>Email : {resa.etab_email}</li>
+          </ul>
+          <p><strong>Responsable légal :</strong></p>
+          <ul>
+            <li>Nom : {resa.resp_legal_nom or '—'}</li>
+            <li>Téléphone : {resa.resp_legal_tel or '—'}</li>
+          </ul>
+          <p>Votre réservation a été réalisée le {date_fr(date.today())}. Nous vous remercions de l'intérêt porté à nos formations.</p>
+          <hr style="border:none;border-top:1px solid #ddd;margin:20px 0;">
+          <p style="color:#888;font-size:12px;">⚠️ Ceci est un mail automatique, merci de ne pas y répondre. Pour nous contacter : <a href="mailto:ministagesfernandleger@gmail.com">ministagesfernandleger@gmail.com</a></p>
+          <p style="color:#888;font-size:12px;">{LYCEE['nom']} — {LYCEE['adresse']}</p>
         </div>"""
         envoyer_mail(resa.etab_email, f"Confirmation mini-stage — {nom_f} le {date_fr(cr.date)}", html, [(f"convention_{code}.pdf", pdf)])
         return redirect(url_for('confirmation', code=code))
@@ -372,7 +393,7 @@ def reservation():
 @app.route('/confirmation/<code>')
 def confirmation(code):
     resa = Reservation.query.filter_by(code=code).first_or_404()
-    return render_template('confirmation.html', resa=resa)
+    return render_template('confirmation.html', resa=resa, date_fr=date_fr)
 
 @app.route('/convention/<code>')
 def telecharger_convention(code):
@@ -398,10 +419,11 @@ def liste_attente():
         db.session.commit()
         f = cr.formation
         nom_f = f"{f['niveau']} {f['nom']}" if f else cr.formation_id
-        html = f"""<div style="font-family:Arial,sans-serif;max-width:500px;margin:0 auto;padding:30px;background:#f0f7ff;border-radius:12px;">
-          <h2 style="color:#1565c0;">📋 Inscription liste d'attente</h2>
-          <p>Vous êtes inscrit(e) sur la liste d'attente pour <b>{nom_f}</b> le {date_fr(cr.date)} de {cr.heure_debut} à {cr.heure_fin}.</p>
+        html = f"""<div style="font-family:Arial,sans-serif;max-width:500px;margin:0 auto;padding:30px;">
+          <p>Bonjour,</p>
+          <p>Vous êtes inscrit(e) sur la liste d'attente pour <strong>{nom_f}</strong> le {date_fr(cr.date)} de {cr.heure_debut} à {cr.heure_fin}.</p>
           <p>Vous serez notifié(e) par mail dès qu'une place se libère.</p>
+          <p style="color:#888;font-size:12px;">⚠️ Ceci est un mail automatique. Pour nous contacter : <a href="mailto:ministagesfernandleger@gmail.com">ministagesfernandleger@gmail.com</a></p>
         </div>"""
         envoyer_mail(mdp.email, f"Liste d'attente — {nom_f}", html)
         flash("Vous avez été ajouté(e) à la liste d'attente.", "success")
@@ -465,10 +487,11 @@ def modifier(code):
     notifier_suivant_attente(ancien.id)
     f = nouveau.formation
     nom_f = f"{f['niveau']} {f['nom']}" if f else ''
-    html = f"""<div style="font-family:Arial,sans-serif;max-width:500px;margin:0 auto;padding:30px;background:#f0f7ff;border-radius:12px;">
-      <h2 style="color:#1565c0;">✏️ Réservation modifiée</h2>
-      <p>Votre réservation <b>{code}</b> a été déplacée sur : <b>{nom_f}</b> le {date_fr(nouveau.date)} de {nouveau.heure_debut} à {nouveau.heure_fin}.</p>
+    html = f"""<div style="font-family:Arial,sans-serif;max-width:500px;margin:0 auto;padding:30px;">
+      <p>Bonjour,</p>
+      <p>Votre réservation <strong>{code}</strong> a été modifiée. Nouveau créneau : <strong>{nom_f}</strong> le {date_fr(nouveau.date)} de {nouveau.heure_debut} à {nouveau.heure_fin}.</p>
       <p>Une nouvelle convention vous est envoyée en pièce jointe.</p>
+      <p style="color:#888;font-size:12px;">⚠️ Ceci est un mail automatique. Pour nous contacter : <a href="mailto:ministagesfernandleger@gmail.com">ministagesfernandleger@gmail.com</a></p>
     </div>"""
     pdf = generer_convention_pdf(resa)
     envoyer_mail(resa.etab_email, f"Modification réservation {code}", html, [(f"convention_{code}.pdf", pdf)])
@@ -486,8 +509,9 @@ def annuler(code):
     f = cr.formation
     nom_f = f"{f['niveau']} {f['nom']}" if f else ''
     html = f"""<div style="font-family:Arial,sans-serif;max-width:500px;margin:0 auto;padding:30px;">
-      <h2 style="color:#d94f4f;">❌ Annulation confirmée</h2>
-      <p>La réservation <b>{code}</b> ({resa.eleve_prenom} {resa.eleve_nom} — {nom_f} le {date_fr(cr.date)}) a bien été annulée.</p>
+      <p>Bonjour,</p>
+      <p>La réservation <strong>{code}</strong> ({resa.eleve_prenom} {resa.eleve_nom} — {nom_f} le {date_fr(cr.date)}) a bien été annulée.</p>
+      <p style="color:#888;font-size:12px;">⚠️ Ceci est un mail automatique. Pour nous contacter : <a href="mailto:ministagesfernandleger@gmail.com">ministagesfernandleger@gmail.com</a></p>
     </div>"""
     envoyer_mail(resa.etab_email, f"Annulation réservation {code}", html)
     flash("Réservation annulée.", "success")
