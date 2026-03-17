@@ -477,12 +477,12 @@ def confirmer_attente(token):
 
 @app.route('/rgpd')
 def rgpd():
-    return render_template('rgpd.html')
+   return render_template('rgpd.html')
 
-    @app.route('/contact')
+@app.route('/contact')
 def contact():
     return render_template('contact.html')
-
+    
 @app.route('/gerer', methods=['GET','POST'])
 def gerer():
     resa = None
