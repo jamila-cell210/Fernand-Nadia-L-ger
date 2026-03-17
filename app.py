@@ -77,22 +77,29 @@ class Creneau(db.Model):
         return self.places_restantes <= 0
 
 class Reservation(db.Model):
-    id               = db.Column(db.Integer, primary_key=True)
-    code             = db.Column(db.String(10), unique=True, nullable=False)
-    creneau_id       = db.Column(db.Integer, db.ForeignKey('creneau.id'), nullable=False)
-    eleve_nom        = db.Column(db.String(100), nullable=False)
-    eleve_prenom     = db.Column(db.String(100), nullable=False)
-    eleve_classe     = db.Column(db.String(50), default='')
-    eleve_ddn        = db.Column(db.String(20), default='')
-    resp_legal_nom   = db.Column(db.String(150), default='')
-    resp_legal_tel   = db.Column(db.String(30), default='')
-    etab_nom         = db.Column(db.String(200), nullable=False)
-    etab_ville       = db.Column(db.String(100), default='')
-    etab_email       = db.Column(db.String(200), nullable=False)
-    etab_contact     = db.Column(db.String(100), default='')
-    etab_tel         = db.Column(db.String(30), default='')
-    date_reservation = db.Column(db.DateTime, default=datetime.now)
-    annulee          = db.Column(db.Boolean, default=False)
+    id                = db.Column(db.Integer, primary_key=True)
+    code              = db.Column(db.String(10), unique=True, nullable=False)
+    creneau_id        = db.Column(db.Integer, db.ForeignKey('creneau.id'), nullable=False)
+    eleve_nom         = db.Column(db.String(100), nullable=False)
+    eleve_prenom      = db.Column(db.String(100), nullable=False)
+    eleve_classe      = db.Column(db.String(50), default='')
+    eleve_ddn         = db.Column(db.String(20), default='')
+    resp_legal_nom    = db.Column(db.String(150), default='')
+    resp_legal_tel    = db.Column(db.String(30), default='')
+    resp_legal_email  = db.Column(db.String(200), default='')
+    etab_nom          = db.Column(db.String(200), nullable=False)
+    etab_ville        = db.Column(db.String(100), default='')
+    etab_email        = db.Column(db.String(200), nullable=False)
+    etab_email_direct = db.Column(db.String(200), default='')
+    etab_contact      = db.Column(db.String(100), default='')
+    etab_tel          = db.Column(db.String(30), default='')
+    contact_nom       = db.Column(db.String(100), default='')
+    contact_prenom    = db.Column(db.String(100), default='')
+    contact_tel       = db.Column(db.String(30), default='')
+    contact_email     = db.Column(db.String(200), default='')
+    remarques         = db.Column(db.Text, default='')
+    date_reservation  = db.Column(db.DateTime, default=datetime.now)
+    annulee           = db.Column(db.Boolean, default=False)
 
 class ListeAttente(db.Model):
     id           = db.Column(db.Integer, primary_key=True)
@@ -118,10 +125,16 @@ def email_ok(email):
     return any(email.lower().strip().endswith('@' + a) for a in ACADEMIES)
 
 def envoyer_mail(dest, sujet, html, pieces=None):
+    # dest peut être une string ou une liste
+    if isinstance(dest, str):
+        dest = [dest]
+    dest = [d for d in dest if d and d.strip()]
+    if not dest:
+        return False
     try:
         payload = {
             "sender": {"name": "Mini-Stages Lycée Fernand et Nadia Léger", "email": MAIL_FROM},
-            "to": [{"email": dest}],
+            "to": [{"email": d} for d in dest],
             "subject": sujet,
             "htmlContent": html,
         }
@@ -332,6 +345,9 @@ def reservation():
             flash("Ce créneau est complet.", "error")
             return redirect(url_for('reservation'))
         code = gen_code(8)
+        etab_email_direct = request.form.get('etab_email_affiche','').strip()
+        resp_legal_email = request.form.get('resp_legal_email','').strip()
+        contact_email = request.form.get('contact_email','').strip()
         resa = Reservation(
             code=code, creneau_id=cr.id,
             eleve_nom=request.form.get('eleve_nom','').strip().upper(),
@@ -340,17 +356,32 @@ def reservation():
             eleve_ddn=request.form.get('eleve_ddn','').strip(),
             resp_legal_nom=request.form.get('resp_legal_nom','').strip(),
             resp_legal_tel=request.form.get('resp_legal_tel','').strip(),
+            resp_legal_email=resp_legal_email,
             etab_nom=request.form.get('etab_nom','').strip(),
             etab_ville=request.form.get('etab_ville','').strip(),
             etab_email=session['etab_email'],
+            etab_email_direct=etab_email_direct,
             etab_contact=request.form.get('etab_contact','').strip(),
             etab_tel=request.form.get('etab_tel','').strip(),
+            contact_nom=request.form.get('contact_nom','').strip(),
+            contact_prenom=request.form.get('contact_prenom','').strip(),
+            contact_tel=request.form.get('contact_tel','').strip(),
+            contact_email=contact_email,
+            remarques=request.form.get('remarques','').strip(),
         )
         db.session.add(resa)
         db.session.commit()
         pdf = generer_convention_pdf(resa)
         f = cr.formation
         nom_f = f"{f['niveau']} {f['nom']}" if f else cr.formation_id
+
+        # Collecte toutes les adresses destinataires (sans doublons)
+        destinataires = list(dict.fromkeys(filter(None, [
+            session['etab_email'],
+            etab_email_direct if etab_email_direct != session['etab_email'] else None,
+            contact_email if contact_email not in [session['etab_email'], etab_email_direct] else None,
+        ])))
+
         html = f"""<div style="font-family:Arial,sans-serif;max-width:600px;margin:0 auto;padding:30px;">
           <p>Bonjour,</p>
           <p>L'inscription au mini-stage du <strong>{LYCEE['nom']}</strong> est bien enregistrée.</p>
@@ -386,7 +417,7 @@ def reservation():
           <p style="color:#888;font-size:12px;">⚠️ Ceci est un mail automatique, merci de ne pas y répondre. Pour nous contacter : <a href="mailto:ministagesfernandleger@gmail.com">ministagesfernandleger@gmail.com</a></p>
           <p style="color:#888;font-size:12px;">{LYCEE['nom']} — {LYCEE['adresse']}</p>
         </div>"""
-        envoyer_mail(resa.etab_email, f"Confirmation mini-stage — {nom_f} le {date_fr(cr.date)}", html, [(f"convention_{code}.pdf", pdf)])
+        envoyer_mail(destinataires, f"Confirmation mini-stage — {nom_f} le {date_fr(cr.date)}", html, [(f"convention_{code}.pdf", pdf)])
         return redirect(url_for('confirmation', code=code))
     return render_template('reservation.html', formations=FORMATIONS, par_formation=par_formation, etab_email=session.get('etab_email'), date_fr=date_fr)
 
@@ -487,6 +518,7 @@ def modifier(code):
     notifier_suivant_attente(ancien.id)
     f = nouveau.formation
     nom_f = f"{f['niveau']} {f['nom']}" if f else ''
+    destinataires = list(dict.fromkeys(filter(None, [resa.etab_email, resa.etab_email_direct, resa.contact_email])))
     html = f"""<div style="font-family:Arial,sans-serif;max-width:500px;margin:0 auto;padding:30px;">
       <p>Bonjour,</p>
       <p>Votre réservation <strong>{code}</strong> a été modifiée. Nouveau créneau : <strong>{nom_f}</strong> le {date_fr(nouveau.date)} de {nouveau.heure_debut} à {nouveau.heure_fin}.</p>
@@ -494,7 +526,7 @@ def modifier(code):
       <p style="color:#888;font-size:12px;">⚠️ Ceci est un mail automatique. Pour nous contacter : <a href="mailto:ministagesfernandleger@gmail.com">ministagesfernandleger@gmail.com</a></p>
     </div>"""
     pdf = generer_convention_pdf(resa)
-    envoyer_mail(resa.etab_email, f"Modification réservation {code}", html, [(f"convention_{code}.pdf", pdf)])
+    envoyer_mail(destinataires, f"Modification réservation {code}", html, [(f"convention_{code}.pdf", pdf)])
     flash("Réservation modifiée. Une nouvelle convention vous a été envoyée.", "success")
     return redirect(url_for('gerer'))
 
@@ -508,12 +540,13 @@ def annuler(code):
     cr = resa.creneau
     f = cr.formation
     nom_f = f"{f['niveau']} {f['nom']}" if f else ''
+    destinataires = list(dict.fromkeys(filter(None, [resa.etab_email, resa.etab_email_direct, resa.contact_email])))
     html = f"""<div style="font-family:Arial,sans-serif;max-width:500px;margin:0 auto;padding:30px;">
       <p>Bonjour,</p>
       <p>La réservation <strong>{code}</strong> ({resa.eleve_prenom} {resa.eleve_nom} — {nom_f} le {date_fr(cr.date)}) a bien été annulée.</p>
       <p style="color:#888;font-size:12px;">⚠️ Ceci est un mail automatique. Pour nous contacter : <a href="mailto:ministagesfernandleger@gmail.com">ministagesfernandleger@gmail.com</a></p>
     </div>"""
-    envoyer_mail(resa.etab_email, f"Annulation réservation {code}", html)
+    envoyer_mail(destinataires, f"Annulation réservation {code}", html)
     flash("Réservation annulée.", "success")
     return redirect(url_for('gerer'))
 
