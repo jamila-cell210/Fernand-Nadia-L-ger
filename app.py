@@ -6,9 +6,9 @@ from functools import wraps
 from reportlab.lib.pagesizes import A4
 from reportlab.lib import colors
 from reportlab.lib.styles import getSampleStyleSheet, ParagraphStyle
-from reportlab.platypus import SimpleDocTemplate, Paragraph, Spacer, Table, TableStyle, HRFlowable
+from reportlab.platypus import SimpleDocTemplate, Paragraph, Spacer, Table, TableStyle, HRFlowable, Image
 from reportlab.lib.units import cm
-from reportlab.lib.enums import TA_CENTER, TA_LEFT, TA_JUSTIFY
+from reportlab.lib.enums import TA_CENTER, TA_LEFT, TA_JUSTIFY, TA_RIGHT
 
 app = Flask(__name__)
 app.secret_key = os.environ.get('SECRET_KEY', 'ministages2025secret')
@@ -25,6 +25,7 @@ LYCEE = {
     'nom': 'Lycée Polyvalent Fernand et Nadia Léger',
     'adresse': '7 Allée Fernand Léger, 95100 Argenteuil',
     'tel': '01 39 98 43 43',
+    'email': '0951811c@ac-versailles.fr',
 }
 
 FORMATIONS = [
@@ -182,104 +183,181 @@ def notifier_suivant_attente(creneau_id):
 
 def generer_convention_pdf(resa):
     buffer = io.BytesIO()
-    doc = SimpleDocTemplate(buffer, pagesize=A4, rightMargin=1.8*cm, leftMargin=1.8*cm, topMargin=1.5*cm, bottomMargin=1.5*cm)
+    doc = SimpleDocTemplate(buffer, pagesize=A4,
+                            rightMargin=1.5*cm, leftMargin=1.5*cm,
+                            topMargin=1.2*cm, bottomMargin=1.5*cm)
     bleu = colors.HexColor('#1565c0')
+    noir = colors.black
+    gris = colors.HexColor('#555555')
     story = []
-    titre = ParagraphStyle('t', fontSize=15, fontName='Helvetica-Bold', textColor=bleu, alignment=TA_CENTER, spaceAfter=4)
-    sous  = ParagraphStyle('s', fontSize=9, fontName='Helvetica', textColor=colors.HexColor('#444'), alignment=TA_CENTER, spaceAfter=2)
-    bold9 = ParagraphStyle('b', fontSize=9, fontName='Helvetica-Bold', textColor=colors.black)
-    norm8 = ParagraphStyle('n', fontSize=8, fontName='Helvetica', textColor=colors.HexColor('#333'), leading=12, alignment=TA_JUSTIFY)
-    label = ParagraphStyle('l', fontSize=7.5, fontName='Helvetica-Bold', textColor=colors.HexColor('#555'))
-    story.append(Paragraph(LYCEE['nom'], titre))
-    story.append(Paragraph(f"{LYCEE['adresse']} — Tél : {LYCEE['tel']}", sous))
-    story.append(HRFlowable(width="100%", thickness=2, color=bleu, spaceAfter=10))
-    story.append(Paragraph("CONVENTION DE MINI-STAGE — SÉQUENCE D'OBSERVATION", ParagraphStyle('cv', fontSize=12, fontName='Helvetica-Bold', alignment=TA_CENTER, textColor=bleu, spaceAfter=12)))
+
+    # Styles
+    s_titre = ParagraphStyle('titre', fontSize=13, fontName='Helvetica-Bold', textColor=bleu, alignment=TA_CENTER, spaceAfter=2)
+    s_sous  = ParagraphStyle('sous', fontSize=8.5, fontName='Helvetica', textColor=gris, alignment=TA_CENTER, spaceAfter=4)
+    s_obj   = ParagraphStyle('obj', fontSize=8.5, fontName='Helvetica', textColor=noir, spaceAfter=6, leading=13)
+    s_bold  = ParagraphStyle('bold', fontSize=8.5, fontName='Helvetica-Bold', textColor=noir, leading=13)
+    s_norm  = ParagraphStyle('norm', fontSize=8, fontName='Helvetica', textColor=noir, leading=12)
+    s_small = ParagraphStyle('small', fontSize=7.5, fontName='Helvetica', textColor=gris, leading=11)
+    s_sig   = ParagraphStyle('sig', fontSize=8, fontName='Helvetica-Bold', textColor=noir, alignment=TA_CENTER)
+    s_dispo = ParagraphStyle('dispo', fontSize=8, fontName='Helvetica', textColor=noir, leading=13, leftIndent=10)
+
     cr = resa.creneau
     f = cr.formation
     nom_formation = f"{f['niveau']} {f['nom']}" if f else cr.formation_id
+    contact_display = f"{resa.contact_nom} {resa.contact_prenom}".strip() if resa.contact_nom else resa.etab_contact
+
+    # ── EN-TÊTE ──────────────────────────────────────────────
+    # Logo si dispo
+    logo_path = os.path.join(os.path.dirname(__file__), 'logo.png')
+    if os.path.exists(logo_path):
+        try:
+            logo = Image(logo_path, width=3.5*cm, height=2.2*cm)
+            logo.hAlign = 'CENTER'
+            story.append(logo)
+            story.append(Spacer(1, 0.2*cm))
+        except:
+            pass
+
+    story.append(Paragraph(LYCEE['nom'], s_titre))
+    story.append(Paragraph(f"{LYCEE['adresse']} — Tél : {LYCEE['tel']} — {LYCEE['email']}", s_sous))
+    story.append(HRFlowable(width="100%", thickness=1.5, color=bleu, spaceAfter=6))
+
+    story.append(Paragraph("CONVENTION DE MINI-STAGE", ParagraphStyle('cvt', fontSize=12, fontName='Helvetica-Bold', alignment=TA_CENTER, textColor=bleu, spaceAfter=2)))
+    story.append(Paragraph("Séquence d'observation", ParagraphStyle('cvs', fontSize=9, fontName='Helvetica', alignment=TA_CENTER, textColor=gris, spaceAfter=6)))
+
+    story.append(Paragraph(
+        "<b>Objectif :</b> Permettre la découverte des formations dispensées par le lycée pour parfaire l'orientation des élèves.",
+        s_obj
+    ))
+    story.append(Paragraph("Il a été convenu ce qui suit entre :", s_obj))
+
+    # ── TABLEAU 3 COLONNES : élève / origine / accueil ──────
+    brd = {'style': 'SINGLE', 'color': colors.HexColor('#aaaaaa')}
+
+    def cell(content):
+        return [Paragraph(c, s_norm) for c in content]
+
+    col_eleve = cell([
+        "<b>L'ÉLÈVE</b>",
+        f"Nom : {resa.eleve_nom}",
+        f"Prénom : {resa.eleve_prenom}",
+        f"Classe : {resa.eleve_classe or '___'}",
+        f"Date de naissance : {resa.eleve_ddn or '___'}",
+        " ",
+        "<b>Responsable légal :</b>",
+        f"Nom : {resa.resp_legal_nom or '___'}",
+        f"Tél : {resa.resp_legal_tel or '___'}",
+    ])
+
+    col_origine = cell([
+        "<b>ÉTABLISSEMENT D'ORIGINE</b>",
+        f"Nom : {resa.etab_nom}",
+        f"Représenté par (CE) : {resa.etab_contact or '___'}",
+        f"Tél : {resa.etab_tel or '___'}",
+        " ",
+        "<b>Demandeur du mini-stage :</b>",
+        f"Nom : {contact_display or '___'}",
+        f"Mail : {resa.contact_email or resa.etab_email}",
+    ])
+
+    col_accueil = cell([
+        "<b>ÉTABLISSEMENT D'ACCUEIL</b>",
+        f"Nom : {LYCEE['nom']}",
+        f"Adresse : {LYCEE['adresse']}",
+        f"Tél : {LYCEE['tel']}",
+        f"Mail : {LYCEE['email']}",
+    ])
+
+    t3 = Table(
+        [[col_eleve, col_origine, col_accueil]],
+        colWidths=[6*cm, 6*cm, 6*cm]
+    )
+    t3.setStyle(TableStyle([
+        ('BOX', (0,0), (0,0), 0.5, colors.HexColor('#aaaaaa')),
+        ('BOX', (1,0), (1,0), 0.5, colors.HexColor('#aaaaaa')),
+        ('BOX', (2,0), (2,0), 0.5, colors.HexColor('#aaaaaa')),
+        ('BACKGROUND', (0,0), (0,0), colors.HexColor('#f0f7ff')),
+        ('BACKGROUND', (1,0), (1,0), colors.white),
+        ('BACKGROUND', (2,0), (2,0), colors.HexColor('#f0f7ff')),
+        ('VALIGN', (0,0), (-1,-1), 'TOP'),
+        ('PADDING', (0,0), (-1,-1), 7),
+    ]))
+    story.append(t3)
+    story.append(Spacer(1, 0.4*cm))
+
+    # ── DÉTAILS DU STAGE ────────────────────────────────────
+    story.append(Paragraph("Demande à réaliser un mini-stage en :", s_bold))
+    story.append(Spacer(1, 0.15*cm))
+
     t_stage = Table([
-        [Paragraph('Formation', label), Paragraph(nom_formation, bold9)],
-        [Paragraph('Date', label), Paragraph(date_fr(cr.date), bold9)],
-        [Paragraph('Horaires', label), Paragraph(f"{cr.heure_debut} – {cr.heure_fin}", bold9)],
-        [Paragraph('Salle', label), Paragraph(cr.salle or '—', bold9)],
-        [Paragraph('Professeur', label), Paragraph(cr.professeur or '—', bold9)],
-        [Paragraph('Code réservation', label), Paragraph(resa.code, bold9)],
-    ], colWidths=[4*cm, 13*cm])
+        [Paragraph('Formation', s_bold), Paragraph(nom_formation, s_norm)],
+        [Paragraph('Date', s_bold), Paragraph(date_fr(cr.date), s_norm)],
+        [Paragraph('Horaires', s_bold), Paragraph(f"{cr.heure_debut} – {cr.heure_fin}", s_norm)],
+        [Paragraph('Salle', s_bold), Paragraph(cr.salle or '—', s_norm)],
+        [Paragraph('Référent', s_bold), Paragraph(cr.professeur or '—', s_norm)],
+        [Paragraph('Code réservation', s_bold), Paragraph(resa.code, s_norm)],
+    ], colWidths=[4*cm, 14*cm])
     t_stage.setStyle(TableStyle([
-        ('BACKGROUND',(0,0),(0,-1),colors.HexColor('#e3f0fb')),
-        ('GRID',(0,0),(-1,-1),0.5,colors.HexColor('#c0d8f0')),
-        ('ROWBACKGROUNDS',(0,0),(-1,-1),[colors.HexColor('#f0f7ff'),colors.white]),
-        ('PADDING',(0,0),(-1,-1),5),('VALIGN',(0,0),(-1,-1),'MIDDLE'),
+        ('BACKGROUND', (0,0), (0,-1), colors.HexColor('#e8f0fb')),
+        ('GRID', (0,0), (-1,-1), 0.5, colors.HexColor('#cccccc')),
+        ('ROWBACKGROUNDS', (0,0), (-1,-1), [colors.HexColor('#f5f9ff'), colors.white]),
+        ('PADDING', (0,0), (-1,-1), 5),
+        ('VALIGN', (0,0), (-1,-1), 'MIDDLE'),
     ]))
     story.append(t_stage)
+
+    if resa.remarques:
+        story.append(Spacer(1, 0.3*cm))
+        story.append(Paragraph(f"<b>Remarques :</b> {resa.remarques}", s_norm))
+
     story.append(Spacer(1, 0.4*cm))
-    col_eleve = [
-        Paragraph('<b>L\'ÉLÈVE</b>', ParagraphStyle('h', fontSize=8.5, fontName='Helvetica-Bold', textColor=bleu)),
-        Spacer(1,4),
-        Paragraph(f"Nom : {resa.eleve_nom}", norm8),
-        Paragraph(f"Prénom : {resa.eleve_prenom}", norm8),
-        Paragraph(f"Classe : {resa.eleve_classe or '—'}", norm8),
-        Paragraph(f"Date de naissance : {resa.eleve_ddn or '—'}", norm8),
-        Spacer(1,6),
-        Paragraph('<b>RESPONSABLE LÉGAL</b>', ParagraphStyle('h2', fontSize=8, fontName='Helvetica-Bold', textColor=bleu)),
-        Spacer(1,4),
-        Paragraph(f"Nom : {resa.resp_legal_nom or '—'}", norm8),
-        Paragraph(f"Tél : {resa.resp_legal_tel or '—'}", norm8),
-    ]
-    col_origine = [
-        Paragraph('<b>ÉTABLISSEMENT D\'ORIGINE</b>', ParagraphStyle('h3', fontSize=8.5, fontName='Helvetica-Bold', textColor=bleu)),
-        Spacer(1,4),
-        Paragraph(f"Nom : {resa.etab_nom}", norm8),
-        Paragraph(f"Ville : {resa.etab_ville or '—'}", norm8),
-        Paragraph(f"Chef d'établissement : {resa.etab_contact or '—'}", norm8),
-        Paragraph(f"Tél : {resa.etab_tel or '—'}", norm8),
-        Paragraph(f"Mail : {resa.etab_email}", norm8),
-    ]
-    col_accueil = [
-        Paragraph('<b>ÉTABLISSEMENT D\'ACCUEIL</b>', ParagraphStyle('h4', fontSize=8.5, fontName='Helvetica-Bold', textColor=bleu)),
-        Spacer(1,4),
-        Paragraph(f"Nom : {LYCEE['nom']}", norm8),
-        Paragraph(f"Adresse : {LYCEE['adresse']}", norm8),
-        Paragraph(f"Tél : {LYCEE['tel']}", norm8),
-    ]
-    t3col = Table([[col_eleve, col_origine, col_accueil]], colWidths=[5.7*cm, 5.7*cm, 5.7*cm])
-    t3col.setStyle(TableStyle([
-        ('BOX',(0,0),(0,0),0.5,colors.HexColor('#c0d8f0')),
-        ('BOX',(1,0),(1,0),0.5,colors.HexColor('#c0d8f0')),
-        ('BOX',(2,0),(2,0),0.5,colors.HexColor('#c0d8f0')),
-        ('BACKGROUND',(0,0),(0,0),colors.HexColor('#f0f7ff')),
-        ('BACKGROUND',(1,0),(1,0),colors.white),
-        ('BACKGROUND',(2,0),(2,0),colors.HexColor('#f0f7ff')),
-        ('PADDING',(0,0),(-1,-1),8),('VALIGN',(0,0),(-1,-1),'TOP'),
-    ]))
-    story.append(t3col)
-    story.append(Spacer(1, 0.4*cm))
-    story.append(HRFlowable(width="100%", thickness=1, color=colors.HexColor('#c0d8f0'), spaceAfter=8))
-    story.append(Paragraph("DISPOSITIONS GÉNÉRALES", ParagraphStyle('dg', fontSize=9, fontName='Helvetica-Bold', textColor=bleu, spaceAfter=6)))
-    for d in [
+
+    # ── DISPOSITIONS GÉNÉRALES ──────────────────────────────
+    story.append(HRFlowable(width="100%", thickness=0.8, color=colors.HexColor('#cccccc'), spaceAfter=6))
+    story.append(Paragraph("Dispositions générales", s_bold))
+    story.append(Spacer(1, 0.15*cm))
+
+    dispos = [
         "La présente convention a pour objet de définir les modalités d'un mini-stage entre l'élève et son représentant légal, l'établissement d'origine et l'établissement d'accueil.",
-        "Le trajet aller-retour de l'élève se fait sous la responsabilité et à la charge de sa famille.",
-        "Durant le mini-stage, l'élève est soumis au règlement intérieur du lycée d'accueil.",
-        "L'élève devra se présenter 10 minutes avant le début de la séquence muni de cette convention dûment complétée et signée.",
-    ]:
-        story.append(Paragraph(f"• {d}", norm8))
+        "Le trajet aller-retour de l'élève, entre son établissement d'origine ou son domicile et le lycée d'accueil, se fait sous la responsabilité et à la charge de sa famille.",
+        "Durant le mini-stage, l'élève est associé aux activités proposées par l'établissement d'accueil. Il est soumis au règlement intérieur du lycée d'accueil. Sa participation ne doit pas porter préjudice au bon déroulement des cours. Le Proviseur du lycée d'accueil se réserve le droit de prendre toute disposition visant à faire respecter ce règlement. Le Chef d'établissement d'origine en sera alors immédiatement informé.",
+        "Le Chef d'établissement d'origine contracte une assurance couvrant la responsabilité civile de l'élève pour les dommages que ce dernier pourrait causer au lycée d'accueil. Le Proviseur du lycée d'accueil contracte une assurance civile pour les dommages dont l'élève pourrait être victime durant sa présence au lycée.",
+    ]
+    for d in dispos:
+        story.append(Paragraph(f"• {d}", s_dispo))
+        story.append(Spacer(1, 0.1*cm))
+
+    story.append(Spacer(1, 0.2*cm))
+    story.append(Paragraph(
+        "<b>L'élève devra se présenter à l'accueil 10 minutes avant le début de la séquence muni de cette convention dûment complétée.</b>",
+        ParagraphStyle('imp', fontSize=8.5, fontName='Helvetica-Bold', textColor=bleu, leading=13)
+    ))
     story.append(Spacer(1, 0.5*cm))
-    story.append(Paragraph("SIGNATURES", ParagraphStyle('sig', fontSize=9, fontName='Helvetica-Bold', textColor=bleu, spaceAfter=8)))
+
+    # ── SIGNATURES ──────────────────────────────────────────
     sig = Table([
-        ['Responsable légal de l\'élève\n(signature)', 'Chef d\'établissement d\'origine\n(cachet + signature)', 'Établissement d\'accueil\n(cachet + signature)'],
-        ['\n\n\n\n', '\n\n\n\n', '\n\n\n\n'],
-        ['Date : ___________', 'Date : ___________', 'Date : ___________'],
-    ], colWidths=[5.7*cm, 5.7*cm, 5.7*cm])
+        [
+            Paragraph("Signature du responsable légal de l'élève", s_sig),
+            Paragraph("Cachet et signature de l'établissement d'origine", s_sig),
+            Paragraph("Cachet et signature de l'établissement d'accueil", s_sig),
+        ],
+        ['\n\n\n\n\n', '\n\n\n\n\n', '\n\n\n\n\n'],
+        [
+            Paragraph("Date : ___________", s_sig),
+            Paragraph("Date : ___________", s_sig),
+            Paragraph("Date : ___________", s_sig),
+        ],
+    ], colWidths=[6*cm, 6*cm, 6*cm])
     sig.setStyle(TableStyle([
-        ('FONTNAME',(0,0),(-1,0),'Helvetica-Bold'),('FONTSIZE',(0,0),(-1,-1),8),
-        ('ALIGN',(0,0),(-1,-1),'CENTER'),('VALIGN',(0,0),(-1,-1),'TOP'),
-        ('BOX',(0,0),(0,-1),0.5,colors.HexColor('#c0d8f0')),
-        ('BOX',(1,0),(1,-1),0.5,colors.HexColor('#c0d8f0')),
-        ('BOX',(2,0),(2,-1),0.5,colors.HexColor('#c0d8f0')),
-        ('BACKGROUND',(0,0),(-1,0),colors.HexColor('#e3f0fb')),
-        ('PADDING',(0,0),(-1,-1),8),
+        ('BOX', (0,0), (0,-1), 0.5, colors.HexColor('#aaaaaa')),
+        ('BOX', (1,0), (1,-1), 0.5, colors.HexColor('#aaaaaa')),
+        ('BOX', (2,0), (2,-1), 0.5, colors.HexColor('#aaaaaa')),
+        ('BACKGROUND', (0,0), (-1,0), colors.HexColor('#e8f0fb')),
+        ('PADDING', (0,0), (-1,-1), 6),
+        ('VALIGN', (0,0), (-1,-1), 'TOP'),
     ]))
     story.append(sig)
+
     doc.build(story)
     buffer.seek(0)
     return buffer.read()
