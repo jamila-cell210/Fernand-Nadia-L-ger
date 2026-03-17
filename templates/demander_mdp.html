@@ -21,19 +21,21 @@
 .success-box p{font-size:.84rem;color:#2a7a48;line-height:1.6}
 </style>
 {% endblock %}
+
 {% block content %}
 <div class="page-wrap">
   <div class="page-card">
     <div class="picon">🔑</div>
-   <button type="submit" class="btn-primary" style="width:100%">Recevoir le mot de passe →</button>
-<p style="font-size:.78rem;color:var(--muted);margin-top:1.2rem;line-height:1.6;">Pour toute difficulté ou demande particulière, contactez-nous : <a href="mailto:ministagesfernandleger@gmail.com" style="color:var(--blue);font-weight:600;">ministagesfernandleger@gmail.com</a></p>
+    <h1>Recevoir le mot de passe</h1>
     <p>Saisissez votre adresse mail académique. Vous recevrez un mot de passe instantanément.</p>
     <div class="acad-list">
       <span class="acad">@ac-versailles.fr</span>
       <span class="acad">@ac-creteil.fr</span>
       <span class="acad">@ac-paris.fr</span>
     </div>
+
     {% if erreur %}<div class="err">⚠️ {{ erreur }}</div>{% endif %}
+
     {% if succes %}
     <div class="success-box">
       <div class="big">📬</div>
@@ -43,9 +45,16 @@
     <div style="text-align:center;margin-top:1.5rem"><a href="/" class="btn-outline">Retour à l'accueil</a></div>
     {% else %}
     <form method="POST">
-      <div class="fg"><label>Adresse mail académique</label><input type="email" name="email" placeholder="prenom.nom@ac-versailles.fr" required autofocus></div>
+      <div class="fg">
+        <label>Adresse mail académique</label>
+        <input type="email" name="email" placeholder="prenom.nom@ac-versailles.fr" required autofocus>
+      </div>
       <button type="submit" class="btn-primary" style="width:100%">Recevoir le mot de passe →</button>
     </form>
+    <p style="font-size:.78rem;color:var(--muted);margin-top:1.2rem;line-height:1.6;text-align:center;">
+      Pour toute difficulté ou demande particulière, contactez-nous :<br>
+      <a href="mailto:ministagesfernandleger@gmail.com" style="color:var(--blue);font-weight:600;">ministagesfernandleger@gmail.com</a>
+    </p>
     {% endif %}
   </div>
 </div>
