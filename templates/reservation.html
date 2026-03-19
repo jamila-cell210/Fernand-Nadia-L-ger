@@ -200,7 +200,7 @@ function selectCreneau(card, id) {
 
 function updateBtn() {
   const btn = document.getElementById('submit-btn');
-  const ok = curF !== null && document.getElementById('creneau_id').value !== '';
+  const ok = document.getElementById('creneau_id').value !== '';
   btn.disabled = !ok;
   btn.style.opacity = ok ? '1' : '.5';
   btn.style.cursor = ok ? 'pointer' : 'not-allowed';
