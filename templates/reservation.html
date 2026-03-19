@@ -46,8 +46,6 @@
 .req{color:var(--red)}
 .submit-area{text-align:center;margin-top:2rem}
 .submit-area p{font-size:.79rem;color:var(--muted);margin-top:.9rem}
-.attente-btn{display:inline-flex;align-items:center;gap:.4rem;background:#fff8ee;color:#c07010;border:1.5px solid #fde8b0;border-radius:10px;padding:.55rem 1rem;font-size:.8rem;font-weight:600;cursor:pointer;font-family:'Outfit',sans-serif;transition:all .2s;margin-top:.4rem}
-.attente-btn:hover{background:#fde8b0}
 @media(max-width:700px){.resa-wrap{padding:0 1.2rem 3rem}.formations-grid{grid-template-columns:1fr 1fr}.cren-grid,.fgrid{grid-template-columns:1fr}.fg.full{grid-column:1}}
 @media(max-width:450px){.formations-grid{grid-template-columns:1fr}}
 </style>
@@ -98,10 +96,6 @@
             </div>
             {% if cr.complet %}
               <span class="pbadge p-full">Complet</span>
-              <form method="POST" action="/liste-attente" style="display:block;margin-top:.5rem" onsubmit="event.stopPropagation()">
-  <input type="hidden" name="creneau_id" value="{{cr.id}}">
-  <button type="submit" class="attente-btn" onclick="event.stopPropagation();this.form.submit();return false;">📋 M'inscrire en liste d'attente</button>
-</form>
             {% elif cr.places_restantes == 1 %}
               <span class="pbadge p-warn">Dernière place !</span>
             {% else %}
@@ -162,10 +156,10 @@
     </div>
 
     <div class="submit-area">
-     <button type="submit" class="btn-primary" id="submit-btn">
+      <button type="submit" class="btn-primary" id="submit-btn">
         📄 Confirmer et recevoir la convention par mail
       </button>
-     <p>⚠️ La convention devra être signée par le responsable légal <strong>et</strong> par l'établissement d'origine (cachet + signature). Une réservation = un élève.</p>
+      <p>⚠️ La convention devra être signée par le responsable légal <strong>et</strong> par l'établissement d'origine (cachet + signature). Une réservation = un élève.</p>
     </div>
   </form>
 </div>
@@ -173,8 +167,6 @@
 
 {% block extra_js %}
 <script>
-let curF = null;
-
 function selectFormation(fid) {
   document.querySelectorAll('.fcard-btn').forEach(b => b.classList.remove('active'));
   document.querySelectorAll('.f-desc').forEach(d => d.classList.remove('show'));
@@ -182,10 +174,8 @@ function selectFormation(fid) {
   document.getElementById('fbtn-' + fid).classList.add('active');
   document.getElementById('desc-' + fid).classList.add('show');
   document.getElementById('crs-' + fid).classList.add('show');
-  curF = fid;
   document.getElementById('creneau_id').value = '';
   document.querySelectorAll('.cren-card').forEach(c => c.classList.remove('selected'));
-  updateBtn();
   setTimeout(() => {
     document.getElementById('crs-' + fid).scrollIntoView({behavior: 'smooth', block: 'nearest'});
   }, 100);
@@ -195,21 +185,12 @@ function selectCreneau(card, id) {
   document.querySelectorAll('.cren-card').forEach(c => c.classList.remove('selected'));
   card.classList.add('selected');
   document.getElementById('creneau_id').value = id;
-  updateBtn();
 }
 
-function updateBtn() {
-  const btn = document.getElementById('submit-btn');
-  const ok = document.getElementById('creneau_id').value !== '';
-  btn.disabled = !ok;
-  btn.style.opacity = ok ? '1' : '.5';
-  btn.style.cursor = ok ? 'pointer' : 'not-allowed';
-}
-
-document.getElementById('resa-form').addEventListener('submit', e => {
+document.getElementById('resa-form').addEventListener('submit', function(e) {
   if (!document.getElementById('creneau_id').value) {
     e.preventDefault();
-    alert('Veuillez sélectionner un créneau.');
+    alert('⚠️ Veuillez sélectionner un créneau avant de continuer.');
   }
 });
 </script>
